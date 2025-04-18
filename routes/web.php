@@ -1,6 +1,15 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\StudentController;
+use App\Http\Controllers\GuardianController;
+Route::delete('guardians/{guardian}/remove-photo',[GuardianController::class,('removePhoto')])->name('guardians.remove-photo');
+Route::resource('guardians', GuardianController::class);
+
+Route::delete('students/{student}/remove-photo',[StudentController::class,('removePhoto')])->name('students.remove-photo');
+Route::resource('students', StudentController::class);
+
+
 
 Route::get('/', function () {
     return view('welcome');
