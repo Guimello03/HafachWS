@@ -45,7 +45,7 @@ class GuardianController extends Controller
         }
 
         guardian::create($validated);
-        return redirect()->route('guardians.index')->with('success', 'Guardian created successfully!');
+        return redirect()->route('guardians.index')->with('success', 'Responsável Cadastrado com Sucesso!');
     }
 
     /**
@@ -84,7 +84,7 @@ class GuardianController extends Controller
         }
 
         $guardian->update($validated);
-        return redirect()->route('guardians.index')->with('success', 'Guardian updated successfully!');
+        return redirect()->route('guardians.index')->with('success', 'Responsável editado com sucesso!');
     }
 
     /**
@@ -92,14 +92,18 @@ class GuardianController extends Controller
      */
     public function destroy(guardian $guardian)
     {
-        //
+        if ($guardian->photo_path && Storage::disk('public')->exists($guardian->photo_path)){
+        Storage::disk('public')->delete($guardian->photo_path);}
+        $guardian->delete();
+        return redirect()->route('guardians.index')->with('success', 'Responsável removido com sucesso!');
+
     }
     public function removePhoto(guardian $guardian)
     {
         if ($guardian->photo_path && Storage::disk('public')->exists($guardian->photo_path)) {
             Storage::disk('public')->delete($guardian->photo_path);
             $guardian->update(['photo_path'=> null]);
-            return redirect()->route('guardians.index')->with('success', 'Foto removida com sucesso!');
+            return redirect()->route('guardians.edit', $guardian->id)->with('success', 'Foto removida com sucesso!');
         }
     }
 

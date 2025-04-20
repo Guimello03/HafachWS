@@ -4,12 +4,22 @@
             {{ __('Cadastrar Aluno') }}
         </h2>
     </x-slot>
+     <!-- Validação de erros -->
+     @if ($errors->any())
+     <div class="p-4 mb-4 text-red-800 bg-red-100 border border-red-300 rounded shadow">
+         <ul class="pl-5 list-disc">
+             @foreach ($errors->all() as $error)
+                 <li>{{ $error }}</li>
+             @endforeach
+         </ul>
+     </div>
+ @endif
 
     <div class="py-6">
         <div class="mx-auto max-w-7xl sm:px-6 lg:px-8">
             <div class="p-6 overflow-hidden bg-white shadow-sm sm:rounded-lg">
 
-                <form action="{{ route('students.store') }}" method="POST" enctype="multipart/form-data">>
+                <form action="{{ route('students.store') }}" method="POST" enctype="multipart/form-data">
                     @csrf
 
                     <div class="mb-4">
@@ -24,7 +34,7 @@
 
                     <div class="mb-4">
                         <label class="block text-sm font-medium text-gray-700">Data de Nascimento</label>
-                        <input type="date" name="birth_date" class="block w-full mt-1 border-gray-300 rounded shadow-sm">
+                        <input type="date" name="birth_date" id="birth_date" oninput="formatDate(this)" class="block w-full mt-1 border-gray-300 rounded shadow-sm">
                     </div>
                     <div class="flex items-center gap-6 mb-4">
                         <!-- Imagem em branco (placeholder) -->
@@ -50,4 +60,11 @@
             </div>
         </div>
     </div>
+    <script>
+        function formatDate(input) {
+            input.value = input.value
+                //.replace(/(\d{4})(\d{2})(\d{2})/, '$1-$2-$3') // Formato YYYY-MM-DD
+                .replace(/(\d{2})-(\d{2})-(\d{4})/, '$1-$2-$3'); // Formato YYYY-MM-DD
+        }
+    </script>
 </x-app-layout>

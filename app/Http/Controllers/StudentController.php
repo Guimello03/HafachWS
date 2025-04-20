@@ -43,7 +43,7 @@ class StudentController extends Controller
 
 
         Student::create($validated);
-        return redirect()->route('students.index')->with('success', 'Aluno Criado com sucesso!');
+        return redirect()->route('students.index')->with('success', 'Aluno criado com sucesso!');
     }
 
     /**
@@ -74,33 +74,40 @@ class StudentController extends Controller
             'photo' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
         ]);
 
-        
+
         if ($request->hasFile('photo')) {
             // Delete the old photo if it exists
             if ($student->photo_path) {
                 Storage::disk('public')->delete($student->photo_path);
             }
             $path = $request->file('photo')->store('photos', 'public');
-            
+
             $validated['photo_path'] = $path;
         }
              $student->update($validated);
-        
+
         return redirect()->route('students.index')->with('success', 'Aluno atualizado com sucesso!');
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    //public function destroy(Student $studant);
+    public function destroy(Student $student)
+    {
+        if ($student->photo_path && Storage::disk('public')->exists($student->photo_path)){
+         Storage::disk('public')->delete($student->photo_path);}
+
+        $student->delete();
+        return redirect()->route('students.index')->with('success', 'Aluno removido com sucesso!');
+    }
+
 
     public function removePhoto(Student $student)
     {
         if ($student->photo_path && Storage::disk('public')->exists($student->photo_path)) {
             Storage::disk('public')->delete($student->photo_path);
             $student->update(['photo_path'=> null]);
-            return redirect()->route('students.index')->with('success', 'Foto removida com sucesso!');
-            
+            return redirect()->route('students.edit', $student->id)->with('success', 'Foto removida com sucesso!');
         }
     }
 }
