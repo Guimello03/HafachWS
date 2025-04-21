@@ -20,9 +20,8 @@
             <div class="p-6 overflow-hidden bg-white shadow-sm sm:rounded-lg">
                 <div class="flex flex-col items-start gap-8 md:flex-row">
                     <!-- COLUNA 1 – Formulário -->
-                    <div class="w-full md:w-3/4">
-                        <form action="{{ route('students.update', $student->id) }}" method="POST"
-                            enctype="multipart/form-data">
+                    <div class="w-full md:w-2/3">
+                        <form action="{{ route('students.update', $student->id) }}" method="POST" enctype="multipart/form-data">
                             @csrf
                             @method('PUT')
 
@@ -31,6 +30,7 @@
                                 <input type="text" name="name" value="{{ old('name', $student->name) }}"
                                     class="block w-full mt-1 border-gray-300 rounded shadow-sm">
                             </div>
+
                             <input type="file" name="photo" id="uploadPhoto" accept="image/*" class="hidden"
                                 onchange="previewPhoto(event)">
 
@@ -49,8 +49,6 @@
                             </div>
 
                             <div class="flex flex-wrap gap-2 mt-4">
-
-
                                 <button type="submit"
                                     class="px-4 py-2 text-white bg-blue-600 rounded hover:bg-blue-700">
                                     Salvar
@@ -70,41 +68,38 @@
                             </button>
                         </form>
                     </div>
-                </div>
 
-                <!-- COLUNA 2 – Foto -->
-                <div class="flex flex-col items-center justify-center w-full md:w-1/4">
-                    @if ($student->photo_path)
-                        <img src="{{ asset('storage/' . $student->photo_path) }}" alt="Foto do aluno"
-                            class="object-cover w-40 h-40 mb-2 border border-gray-300">
-
-                        <form action="{{ route('students.remove-photo', $student->id) }}" method="POST">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit"
-                                class="px-3 py-1 text-sm text-white bg-red-600 rounded hover:bg-red-700">
-                                Remover Foto
-                            </button>
-                        </form>
-                    @else
-                        <!-- Placeholder: Sem foto -->
-                        <div id="noPhotoPlaceholder"
-                            class="flex items-center justify-center w-32 h-32 mb-2 font-semibold text-center text-gray-500 bg-gray-100 border border-gray-300 rounded">
-                            Sem Foto
-                        </div>
-                        <img id="photoPreview" src="#" alt="Prévia da Foto"
-                            class="hidden object-cover w-32 h-32 mb-2 border border-gray-300 rounded">
-                        <button type="button" onclick="document.getElementById('uploadPhoto').click()"
-                            class="px-3 py-1 mt-2 text-sm text-white bg-blue-600 rounded hover:bg-blue-700">
-                            Adicionar Foto
-                        </button>
-                    @endif
-
-
+                  <!-- COLUNA 2 – Foto -->
+<div class="flex flex-col items-start justify-start w-full md:w-1/3">
+    <div class="w-[130px] h-[170px]">
+        @if ($student->photo_path)
+            <img src="{{ asset('storage/' . $student->photo_path) }}" alt="Foto do aluno"
+                class="object-cover w-full h-full border rounded shadow">
+            <form action="{{ route('students.remove-photo', $student->id) }}" method="POST" class="mt-2">
+                @csrf
+                @method('DELETE')
+                <button type="submit"
+                    class="px-3 py-1 text-sm text-white bg-red-600 rounded hover:bg-red-700">
+                    Remover Foto
+                </button>
+            </form>
+        @else
+            <div id="noPhotoPlaceholder"
+                class="flex items-center justify-center w-32 h-32 mb-2 font-semibold text-center text-gray-500 bg-gray-100 border border-gray-300 rounded">
+                Sem Foto
+            </div>
+            <img id="photoPreview" src="#" alt="Prévia da Foto"
+                class="hidden object-cover w-32 h-32 mb-2 border border-gray-300 rounded">
+            <button type="button" onclick="document.getElementById('uploadPhoto').click()"
+                class="px-3 py-1 mt-2 text-sm text-white bg-blue-600 rounded hover:bg-blue-700">
+                Adicionar Foto
+            </button>
+        @endif
+    </div>
+</div>
                 </div>
             </div>
         </div>
-    </div>
     </div>
 
     <script>

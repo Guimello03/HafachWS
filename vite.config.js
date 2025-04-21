@@ -1,14 +1,19 @@
+import { defineConfig } from 'vite';
+import laravel from 'laravel-vite-plugin';
+
 export default defineConfig({
-    plugins: [laravel({
-        input: ['resources/css/app.css', 'resources/js/app.js'],
-        refresh: true,
-    })],
     server: {
-        host: true,              // <- permite acesso externo
-        strictPort: true,        // <- evita fallback de porta
-        port: 5173,              // <- força a usar 5173
+        host: '0.0.0.0', // permite acesso externo (do host)
+        port: 5173,
+        strictPort: true,
         hmr: {
-            host: 'localhost',   // <- necessário para Laravel/Vite HMR
+            host: '192.168.1.14', // ← IMPORTANTE: IP da sua VM no VirtualBox
         },
     },
-})
+    plugins: [
+        laravel({
+            input: ['resources/css/app.css', 'resources/js/app.js'],
+            refresh: true,
+        }),
+    ],
+});
