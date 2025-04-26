@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Support\Str;
+
 
 /**
  * 
@@ -22,6 +24,17 @@ class Student extends Model
         'registration_number',
         'birth_date',
         'photo_path',
+        'uuid',
     ];
+    protected static function booted()
+{
+    static::creating(function ($student) {
+        $student->uuid = (string) Str::uuid();
+    });
+}
+public function getRouteKeyName()
+{
+    return 'uuid';
+}
 
 }

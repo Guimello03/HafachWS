@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\guardian;
+use App\Models\Guardian;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -13,7 +13,17 @@ class GuardianController extends Controller
      */
     public function index()
     {
-        $guardians = guardian::all();
+        $search = request('search');
+        $guardians = Guardian::query()
+            ->when($search, function ($query, $search) {
+                $query->where('name', 'like', "%{$search}%")
+                    ->orWhere('cpf', 'like', "%{$search}%");
+            })
+            ->orderBy('name')
+            ->paginate(10);
+             
+            
+
         return view('guardians.index', compact('guardians'));
     }
 
@@ -44,7 +54,7 @@ class GuardianController extends Controller
             $validated['photo_path'] = $path;
         }
 
-        guardian::create($validated);
+        Guardian::create($validated);
         return redirect()->route('guardians.index')->with('success', 'Responsável Cadastrado com Sucesso!');
     }
 
@@ -59,7 +69,7 @@ class GuardianController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(guardian $guardian)
+    public function edit(Guardian $guardian)
     {
         return view('guardians.edit', compact('guardian'));
     }
@@ -67,7 +77,7 @@ class GuardianController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, guardian $guardian)
+    public function update(Request $request, Guardian $guardian)
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
@@ -90,7 +100,7 @@ class GuardianController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(guardian $guardian)
+    public function destroy(Guardian $guardian)
     {
         if ($guardian->photo_path && Storage::disk('public')->exists($guardian->photo_path)){
         Storage::disk('public')->delete($guardian->photo_path);}
@@ -98,15 +108,45 @@ class GuardianController extends Controller
         return redirect()->route('guardians.index')->with('success', 'Responsável removido com sucesso!');
 
     }
-    public function removePhoto(guardian $guardian)
+    public function removePhoto(Guardian $guardian)
     {
         if ($guardian->photo_path && Storage::disk('public')->exists($guardian->photo_path)) {
             Storage::disk('public')->delete($guardian->photo_path);
-            $guardian->update(['photo_path'=> null]);
-            return redirect()->route('guardians.edit', $guardian->id)->with('success', 'Foto removida com sucesso!');
+            $guardian->update(['photo_path' => null]);
+            if (request()->wantsJson()) {
+                return response()->json(['message' => 'Foto removida com sucesso!']);
+            }
+    
+            return redirect()->back()->with('success', 'Foto removida com sucesso!');
+        } else {
+            if (request()->wantsJson()) {
+                return response()->json(['error' => 'Nenhuma foto encontrada para remover.'], 404);
+            }
+    
+            return redirect()->back()->with('error', 'Nenhuma foto encontrada para remover.');
         }
+        
     }
+    public function updatePhoto(Request $request, Guardian $guardian)
+    {
+        $validated = $request->validate([
+            'photo' => 'required|image|mimes:jpeg,png,jpg|max:2048',
+        ]);
 
+        if ($request->hasFile('photo')) {
+            // Delete the old photo if it exists
+            if ($guardian->photo_path) {
+                Storage::disk('public')->delete($guardian->photo_path);
+            }
+            $path = $request->file('photo')->store('photos', 'public');
+
+            $validated['photo_path'] = $path;
+        }
+
+        $guardian->update($validated);
+
+        return redirect()->route('guardians.index')->with('success', 'Foto atualizada com sucesso!');
+    }
 }
 
 

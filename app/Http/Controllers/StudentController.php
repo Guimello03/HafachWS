@@ -5,16 +5,37 @@ namespace App\Http\Controllers;
 use App\Models\Student;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use App\Models\Guardian;
+
+
+
 
 class StudentController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $students = Student::all();
-        return view('students.index', compact('students'));
+        $breadcrumbs = [
+            ['label' => 'Dashboard', 'url' => route('dashboard')],
+            ['label' => 'Alunos', 'url' => ''], // sem URL porque é a página atual
+        ];
+        $search = $request->input('search');
+        $students = Student::query()
+    ->when($search, function ($query, $search) {
+        $query->where('name', 'like', "%{$search}%")
+              ->orWhere('registration_number', 'like', "%{$search}%");
+    })
+    ->orderBy('name')
+    ->paginate(10);
+    
+    
+
+
+
+
+        return view('students.index', compact('students', 'breadcrumbs'));
     }
 
     /**
@@ -22,7 +43,14 @@ class StudentController extends Controller
      */
     public function create()
     {
-        return view('students.create');
+        $breadcrumbs = [
+            ['label' => 'Dashboard',
+             'url' => route('dashboard'),
+            ],
+            ['label' => 'Alunos', 'url' => route('students.index')],
+            ['label' => 'Criar Aluno', 'url' => ''], // sem URL porque é a página atual
+        ];
+        return view('students.create', compact('breadcrumbs'));
     }
 
     /**
@@ -59,7 +87,9 @@ class StudentController extends Controller
      */
     public function edit(Student $student)
     {
-        return view('students.edit', compact('student'));
+        $guardians = \App\Models\Guardian::all();
+
+        return view('students.edit', compact('student', 'guardians'));
     }
 
     /**
@@ -73,6 +103,7 @@ class StudentController extends Controller
             'birth_date' => 'required|date',
             'photo' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
         ]);
+        
 
 
         if ($request->hasFile('photo')) {
@@ -103,11 +134,52 @@ class StudentController extends Controller
 
 
     public function removePhoto(Student $student)
-    {
-        if ($student->photo_path && Storage::disk('public')->exists($student->photo_path)) {
-            Storage::disk('public')->delete($student->photo_path);
-            $student->update(['photo_path'=> null]);
-            return redirect()->route('students.edit', $student->id)->with('success', 'Foto removida com sucesso!');
+{
+    if ($student->photo_path && Storage::disk('public')->exists($student->photo_path)) {
+        Storage::disk('public')->delete($student->photo_path);
+        $student->update(['photo_path' => null]);
+
+        // 🚨 ESSENCIAL para fetch()
+        if (request()->wantsJson()) {
+            return response()->json(['message' => 'Foto removida com sucesso!']);
         }
+
+        return redirect()->back()->with('success', 'Foto removida com sucesso!');
+    } else {
+        if (request()->wantsJson()) {
+            return response()->json(['error' => 'Nenhuma foto encontrada para remover.'], 404);
+        }
+
+        return redirect()->back()->with('error', 'Nenhuma foto encontrada para remover.');
     }
+}
+    
+    public function updatePhoto(Request $request, Student $student)
+  {
+    $request->validate([
+        'photo' => 'required|image|max:2048',
+    ]);
+
+    if ($student->photo_path) {
+        Storage::disk('public')->delete($student->photo_path);
+    }
+
+    $path = $request->file('photo')->store('photos', 'public');
+    $student->update(['photo_path' => $path]);
+
+    return redirect()->route('students.index')->with('success', 'Foto atualizada com sucesso!');
+   }
+
+   public function photoModal($student)
+{
+    $student = Student::findOrFail($student);
+
+    return response()->json([
+        'photo_url' => $student->photo_path ? asset('storage/' . $student->photo_path) : null,
+        'student_id' => $student->uuid,
+    ]);
+}
+
+
+
 }

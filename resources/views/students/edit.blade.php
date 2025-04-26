@@ -1,107 +1,122 @@
-<x-app-layout>
+<x-admin-layout>
     <x-slot name="header">
-        <h2 class="text-xl font-semibold leading-tight text-gray-800">
+        <h2 class="text-xl font-semibold leading-tight text-center text-gray-800">
             {{ __('Editar Aluno') }}
         </h2>
     </x-slot>
 
-    @if ($errors->any())
-        <div class="p-4 mb-4 text-red-800 bg-red-100 border border-red-300 rounded shadow">
-            <ul class="pl-5 list-disc">
-                @foreach ($errors->all() as $error)
-                    <li>{{ $error }}</li>
-                @endforeach
-            </ul>
-        </div>
-    @endif
-
     <div class="py-6">
-        <div class="mx-auto max-w-7xl sm:px-6 lg:px-8">
-            <div class="p-6 overflow-hidden bg-white shadow-sm sm:rounded-lg">
-                <div class="flex flex-col items-start gap-8 md:flex-row">
-                    <!-- COLUNA 1 – Formulário -->
-                    <div class="w-full md:w-2/3">
-                        <form action="{{ route('students.update', $student->id) }}" method="POST" enctype="multipart/form-data">
-                            @csrf
-                            @method('PUT')
+        <div class="max-w-xl mx-auto">
+            <div class="p-6 bg-white rounded-lg shadow-md">
 
-                            <div class="mb-4">
-                                <label class="block text-sm font-medium text-gray-700">Nome</label>
-                                <input type="text" name="name" value="{{ old('name', $student->name) }}"
-                                    class="block w-full mt-1 border-gray-300 rounded shadow-sm">
-                            </div>
 
-                            <input type="file" name="photo" id="uploadPhoto" accept="image/*" class="hidden"
-                                onchange="previewPhoto(event)">
 
-                            <div class="mb-4">
-                                <label class="block text-sm font-medium text-gray-700">Matrícula</label>
-                                <input type="text" name="registration_number"
-                                    value="{{ old('registration_number', $student->registration_number) }}"
-                                    class="block w-full mt-1 border-gray-300 rounded shadow-sm">
-                            </div>
+                <!-- Foto de perfil -->
+                <div class="flex flex-col items-center justify-center mb-6">
 
-                            <div class="mb-4">
-                                <label class="block text-sm font-medium text-gray-700">Data de Nascimento</label>
-                                <input type="date" name="birth_date"
-                                    value="{{ old('birth_date', $student->birth_date) }}"
-                                    class="block w-full mt-1 border-gray-300 rounded shadow-sm">
-                            </div>
 
-                            <div class="flex flex-wrap gap-2 mt-4">
-                                <button type="submit"
-                                    class="px-4 py-2 text-white bg-blue-600 rounded hover:bg-blue-700">
-                                    Salvar
-                                </button>
-                                <a href="{{ route('students.index') }}"
-                                    class="px-4 py-2 text-white bg-yellow-600 rounded hover:bg-yellow-700">
-                                    Voltar
-                                </a>
-                        </form>
+                    <label for="uploadPhoto" class="relative cursor-pointer group">
+                        <div
+                            class="w-32 h-32 overflow-hidden transition-all border-2 border-gray-300 rounded-full shadow-md group-hover:opacity-70">
+                            @if ($student->photo_path)
+                                <img id="photoPreview" src="{{ asset('storage/' . $student->photo_path) }}"
+                                    class="object-cover w-full h-full">
+                            @else
+                                <img id="photoPreview" src="https://via.placeholder.com/150"
+                                    class="hidden object-cover w-full h-full">
+                                <div id="noPhotoPlaceholder"
+                                    class="flex items-center justify-center w-32 h-32 text-sm text-gray-400 bg-gray-100 border-2 border-gray-300 rounded-full shadow-sm ">
+                                    Sem Foto
+                                </div>
+                            @endif
+                        </div>
+                        <div
+                            class="absolute inset-0 flex items-center justify-center transition-opacity bg-gray-200 bg-opacity-50 rounded-full opacity-0 group-hover:opacity-100">
+                            <span class="text-sm text-gray-700">Alterar Foto</span>
+                        </div>
+                    </label>
+                    </form>
 
-                        <form action="{{ route('students.destroy', $student->id) }}" method="POST"
-                            onsubmit="return confirm('Tem certeza que deseja excluir este aluno?');">
+                    @if ($student->photo_path)
+                        <form action="{{ route('students.remove-photo', $student) }}" method="POST" class="mt-2">
                             @csrf
                             @method('DELETE')
-                            <button type="submit" class="px-4 py-2 text-white bg-red-600 rounded hover:bg-red-700">
-                                Excluir
+                            <button type="submit"
+                                class="text-white bg-red-600 hover:bg-red-700 font-medium rounded-lg text-sm px-4 py-1.5 mt-2">
+                                Remover Foto
                             </button>
                         </form>
+                    @endif
+                </div>
+
+
+                <!-- Campos -->
+                <form action="{{ route('students.update', $student) }}" method="POST"
+                    enctype="multipart/form-data">
+                    @csrf
+                    @method('PUT')
+
+                    <input type="file" name="photo" id="uploadPhoto" accept="image/*" class="hidden"
+                        onchange="previewPhoto(event)">
+                    <div class="mb-4">
+
+                        <label for="name" class="block mb-2 text-sm font-medium text-gray-900">Nome</label>
+                        <input type="text" name="name" id="name" value="{{ old('name', $student->name) }}"
+                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5">
                     </div>
 
-                  <!-- COLUNA 2 – Foto -->
-<div class="flex flex-col items-start justify-start w-full md:w-1/3">
-    <div class="w-[130px] h-[170px]">
-        @if ($student->photo_path)
-            <img src="{{ asset('storage/' . $student->photo_path) }}" alt="Foto do aluno"
-                class="object-cover w-full h-full border rounded shadow">
-            <form action="{{ route('students.remove-photo', $student->id) }}" method="POST" class="mt-2">
-                @csrf
-                @method('DELETE')
-                <button type="submit"
-                    class="px-3 py-1 text-sm text-white bg-red-600 rounded hover:bg-red-700">
-                    Remover Foto
-                </button>
-            </form>
-        @else
-            <div id="noPhotoPlaceholder"
-                class="flex items-center justify-center w-32 h-32 mb-2 font-semibold text-center text-gray-500 bg-gray-100 border border-gray-300 rounded">
-                Sem Foto
+                    <div class="mb-4">
+                        <label for="registration_number"
+                            class="block mb-2 text-sm font-medium text-gray-900">Matrícula</label>
+                        <input type="text" name="registration_number" id="registration_number"
+                            value="{{ old('registration_number', $student->registration_number) }}"
+                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5">
+                    </div>
+
+
+                    <div class="mb-6">
+                        <label for="birth_date" class="block mb-2 text-sm font-medium text-gray-900">Data de
+                            Nascimento</label>
+                        <input type="date" name="birth_date" id="birth_date"
+                            value="{{ old('birth_date', $student->birth_date) }}"
+                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5">
+                    </div>
+
+                    <!-- Botões -->
+                    <div class="flex justify-center gap-4 mt-4">
+                        <!-- Botão Salvar -->
+                        <button type="submit"
+                            class="text-white bg-blue-600 hover:bg-blue-800 font-medium rounded-lg text-sm px-6 py-2.5">
+                            Salvar
+                        </button>
+
+                        <!-- Botão Voltar -->
+                        <a href="{{ route('students.index') }}"
+                            class="text-white bg-yellow-500 hover:bg-yellow-600 font-medium rounded-lg text-sm px-6 py-2.5">
+                            Voltar
+                        </a>
+                        
+                </form>
+
+                <!-- Botão Excluir com form visível -->
+                <form action="{{ route('students.destroy', $student) }}" method="POST" class="inline-block"
+                    {{-- 👈 ESSA CLASSE É O SEGREDO --}} onsubmit="return confirm('Tem certeza que deseja excluir este aluno?');">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit"
+                        class="text-white bg-red-600 hover:bg-red-700 font-medium rounded-lg text-sm px-6 py-2.5">
+                        Excluir
+                    </button>
+                </form>
             </div>
-            <img id="photoPreview" src="#" alt="Prévia da Foto"
-                class="hidden object-cover w-32 h-32 mb-2 border border-gray-300 rounded">
-            <button type="button" onclick="document.getElementById('uploadPhoto').click()"
-                class="px-3 py-1 mt-2 text-sm text-white bg-blue-600 rounded hover:bg-blue-700">
-                Adicionar Foto
-            </button>
-        @endif
-    </div>
-</div>
-                </div>
-            </div>
+
+
+
         </div>
     </div>
+    </div>
 
+    <!-- Script de preview -->
     <script>
         function previewPhoto(event) {
             const input = event.target;
@@ -114,10 +129,16 @@
                     const placeholder = document.getElementById('noPhotoPlaceholder');
                     preview.src = e.target.result;
                     preview.classList.remove('hidden');
-                    placeholder.classList.add('hidden');
+                    if (placeholder) {
+                        placeholder.classList.add('hidden');
+                    }
                 }
                 reader.readAsDataURL(file);
             }
         }
     </script>
-</x-app-layout>
+            </div>
+        </div>
+    </div>
+
+</x-admin-layout>
