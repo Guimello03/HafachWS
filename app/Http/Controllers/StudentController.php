@@ -63,6 +63,7 @@ class StudentController extends Controller
             'registration_number' => 'required|string|max:255|unique:students',
             'birth_date' => 'required|date',
             'photo' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            'guardian_id' => 'nullable|exists:guardians,uuid',
         ]);
         if ($request->hasFile('photo')) {
             $path = $request->file('photo')->store('photos', 'public');
@@ -87,9 +88,17 @@ class StudentController extends Controller
      */
     public function edit(Student $student)
     {
+        $student->load('guardian');
+        $breadcrumbs = [
+            ['label' => 'Dashboard', 'url' => route('dashboard')],
+            ['label' => 'Alunos', 'url' => route('students.index')],
+            ['label' => 'Editar Aluno', 'url' => ''], // sem URL porque é a página atual
+        ];
+        
         $guardians = \App\Models\Guardian::all();
+        
 
-        return view('students.edit', compact('student', 'guardians'));
+        return view('students.edit', compact('student', 'guardians', 'breadcrumbs'));
     }
 
     /**
@@ -102,6 +111,7 @@ class StudentController extends Controller
             'registration_number' => 'required|string|max:255|unique:students,registration_number,'. $student->id,
             'birth_date' => 'required|date',
             'photo' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            'guardian_id' => 'nullable|exists:guardians,uuid',
         ]);
         
 
@@ -115,9 +125,10 @@ class StudentController extends Controller
 
             $validated['photo_path'] = $path;
         }
+        
              $student->update($validated);
 
-        return redirect()->route('students.index')->with('success', 'Aluno atualizado com sucesso!');
+             return redirect()->route('students.edit', $student->uuid);
     }
 
     /**
@@ -134,7 +145,7 @@ class StudentController extends Controller
 
 
     public function removePhoto(Student $student)
-{
+    {
     if ($student->photo_path && Storage::disk('public')->exists($student->photo_path)) {
         Storage::disk('public')->delete($student->photo_path);
         $student->update(['photo_path' => null]);
@@ -152,7 +163,7 @@ class StudentController extends Controller
 
         return redirect()->back()->with('error', 'Nenhuma foto encontrada para remover.');
     }
-}
+   }
     
     public function updatePhoto(Request $request, Student $student)
   {
@@ -179,7 +190,16 @@ class StudentController extends Controller
         'student_id' => $student->uuid,
     ]);
 }
+public function removeGuardian(Student $student)
+{
+    
+    $student->update([
+        'guardian_id' => null, // remove o vínculo
+    ]);
+
+    return redirect()->back()->with('success', 'Responsável removido com sucesso!');
 
 
+}
 
 }

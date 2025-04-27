@@ -11,6 +11,8 @@
         
 
         <x-breadcrumb :items="$breadcrumbs" />
+        
+
 
     
 
@@ -39,8 +41,8 @@
             </div>
         @endif
 
-        <div class="px-6 pt-6">
-            <h2 class="mb-4 text-xl font-extrabold text-gray-900">Listagem de Alunos</h2>
+        <div class="px-1 pt-2">
+            <h2 class="px-6 mb-4 text-xl font-bold text-gray-900 pd-6">Listagem de Alunos</h2>
 
             {{-- Filtro e botão --}}
             <div class="px-6 pd-6">
@@ -62,26 +64,26 @@
 
             {{-- Tabela --}}
             <div class="px-6 py-6">
-                <div class="p-6 overflow-hidden bg-white shadow-sm dark:bg-gray-800 sm:rounded-lg">
+                <div class="overflow-hidden bg-white shadow-sm dark:bg-gray-800 sm:rounded-lg">
                     <table class="min-w-full bg-white divide-y divide-gray-200 rounded shadow">
-                        <thead class="text-gray-700 bg-gray-100">
+                        <thead class="text-gray-600 bg-gray-100 ">
                             <tr>
-                                <th class="px-4 py-2 text-left">Nome</th>
-                                <th class="px-4 py-2 text-left">Matrícula</th>
-                                <th class="px-4 py-2 text-left">Nascimento</th>
-                                <th class="px-4 py-2 text-center ">Foto</th>
-                                <th class="px-4 py-2 text-center">Ações</th>
+                                <th class="px-4 py-3 text-left">Nome</th>
+                                <th class="px-4 py-3 text-left">Matrícula</th>
+                                <th class="px-4 py-3 text-left">Nascimento</th>
+                                <th class="px-4 py-3 text-center ">Foto</th>
+                                <th class="px-4 py-3 text-center">Ações</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-200">
                             @foreach ($students as $index => $student)
-                                <tr class="{{ $index % 2 === 0 ? 'bg-white' : 'bg-gray-50' }}">
-                                    <td class="px-4 py-2">{{ $student->name }}</td>
-                                    <td class="px-4 py-2">{{ $student->registration_number }}</td>
-                                    <td class="px-4 py-2">
+                                <tr class="hover:bg-gray-100">
+                                    <td class="px-4 py-4">{{ $student->name }}</td>
+                                    <td class="px-4 py-4">{{ $student->registration_number }}</td>
+                                    <td class="px-4 py-4">
                                         {{ \Carbon\Carbon::parse($student->birth_date)->format('d/m/Y') }}
                                     </td>
-                                    <td class="px-4 py-2 text-center">
+                                    <td class="px-4 py-4 text-center">
                                         <button
                                             @click="openModal(@js($student->uuid), @js($student->photo_path ? asset('storage/' . $student->photo_path) : ''))"
                                             class="rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -104,7 +106,7 @@
                                             @endif
                                         </button>
                                     </td>
-                                    <td class="px-4 py-2 text-center">
+                                    <td class="px-4 py-4 text-center">
                                         <div class="flex justify-center space-x-2">
                                             <a href="{{ route('students.edit', $student) }}"
                                                 class="inline-flex items-center justify-center w-8 h-8 text-blue-600 transition rounded-full hover:text-white hover:bg-blue-600">

@@ -2,7 +2,7 @@
     <x-breadcrumb :items="$breadcrumbs" />
     <x-slot name="header">
         <h2 class="text-xl font-semibold leading-tight text-center text-gray-800">
-            {{ __('Cadastrar Responsável') }}
+            {{ __('Cadastrar Funcionário') }}
         </h2>
     </x-slot>
 
@@ -21,7 +21,7 @@
                     </div>
                 @endif
 
-                <form action="{{ route('guardians.store') }}" method="POST" enctype="multipart/form-data">
+                <form action="{{ route('functionaries.store') }}" method="POST" enctype="multipart/form-data">
                     @csrf
 
                     <!-- Foto com input embutido -->
@@ -97,7 +97,7 @@
                             Salvar
                         </button>
 
-                        <a href="{{ route('guardians.index') }}"
+                        <a href="{{ route('functionaries.index') }}"
                             class="text-white bg-yellow-500 hover:bg-yellow-600 font-medium rounded-lg text-sm px-6 py-2.5">
                             Voltar
                         </a>

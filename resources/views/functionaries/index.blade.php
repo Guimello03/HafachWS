@@ -33,18 +33,18 @@
             </div>
         @endif
         <div class="px-1 pt-2">
-            <h2 class="px-6 mb-4 text-xl font-bold text-gray-900 pd-6">Listagem de Responsáveis</h2>
+            <h2 class="px-6 mb-4 text-xl font-bold text-gray-900 pd-6">Listagem de Funcionários</h2>
 
             {{-- Filtro e botão --}}
             <div class="px-6">
                 <div class="p-4 bg-white border-b border-gray-200 rounded-lg shadow-sm">
                     <div class="flex items-center justify-between gap-4">
-                        <form method="GET" action="{{ route('guardians.index') }}">
+                        <form method="GET" action="{{ route('functionaries.index') }}">
                             <input type="text" name="search" value="{{ request('search') }}"
                                 placeholder="Buscar por nome ou CPF"
                                 class="h-10 px-4 py-2 border rounded-lg shadow-sm w-[400px]" />
                         </form>
-                        <a href="{{ route('guardians.create') }}"
+                        <a href="{{ route('functionaries.create') }}"
                             class="flex items-center justify-center h-10 px-4 py-2 font-semibold text-white bg-green-600 border rounded-lg shadow hover:bg-green-700 focus:outline-none focus:ring focus:ring-green-300">
                             Cadastrar
                         </a>
@@ -68,21 +68,21 @@
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-200">
-                            {{-- Linha por responsável --}}
-                            @foreach ($guardians as $index => $guardian)
+                            {{-- Linha por Funcionários --}}
+                            @foreach ($functionaries as $index => $functionary)
                                 <tr class="hover:bg-gray-100">
-                                    <td class="px-4 py-4">{{ $guardian->name }}</td>
-                                    <td class="px-4 py-4 text-center">{{ $guardian->cpf }}</td>
+                                    <td class="px-4 py-4">{{ $functionary->name }}</td>
+                                    <td class="px-4 py-4 text-center">{{ $functionary->cpf }}</td>
                                     <td class="px-4 py-4">
-                                        {{ \Carbon\Carbon::parse($guardian->birth_date)->format('d/m/Y') }}</td>
-                                    <td class="px-4 py-4 text-center">{{ $guardian->email }}</td>
-                                    <td class="px-4 py-4">{{ $guardian->phone }}</td>
+                                        {{ \Carbon\Carbon::parse($functionary->birth_date)->format('d/m/Y') }}</td>
+                                    <td class="px-4 py-4 text-center">{{ $functionary->email }}</td>
+                                    <td class="px-4 py-4">{{ $functionary->phone }}</td>
                                     <td class="px-4 py-4 text-center">
                                         <button
-                                            @click="openModal(@js($guardian->uuid), @js($guardian->photo_path ? asset('storage/' . $guardian->photo_path) : ''))"
+                                            @click="openModal(@js($functionary->uuid), @js($functionary->photo_path ? asset('storage/' . $functionary->photo_path) : ''))"
                                             class="focus:outline-none">
-                                            @if ($guardian->photo_path)
-                                                <img src="{{ asset('storage/' . $guardian->photo_path) }}"
+                                            @if ($functionary->photo_path)
+                                                <img src="{{ asset('storage/' . $functionary->photo_path) }}"
                                                     class="object-cover w-10 h-10 transition rounded-full hover:scale-110">
                                             @else
                                                 <div
@@ -99,7 +99,7 @@
                                     </td>
                                     <td class="px-4 py-4 text-center">
                                         <div class="flex justify-center space-x-2">
-                                            <a href="{{ route('guardians.edit', $guardian) }}"
+                                            <a href="{{ route('functionaries.edit', $functionary) }}"
                                                 class="inline-flex items-center justify-center w-8 h-8 text-blue-600 transition rounded-full hover:text-white hover:bg-blue-600">
                                                 <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none"
                                                     viewBox="0 0 24 24" stroke="currentColor">
@@ -108,7 +108,7 @@
                                                         d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5M18.5 2.5a2.121 2.121 0 113 3L12 15l-4 1 1-4 9.5-9.5z" />
                                                 </svg>
                                             </a>
-                                            <form action="{{ route('guardians.destroy', $guardian) }}" method="POST"
+                                            <form action="{{ route('functionaries.destroy', $functionary) }}" method="POST"
                                                 onsubmit="return confirm('Tem certeza que deseja excluir este responsável?');">
                                                 @csrf
                                                 @method('DELETE')
@@ -128,7 +128,7 @@
                         </tbody>
                     </table>
                     <div class="flex justify-end mt-4">
-                        {{ $guardians->links() }}
+                        {{ $functionaries->links() }}
                     </div>
                 </div>
             </div>
@@ -137,7 +137,7 @@
         {{-- Modal --}}
         <div x-show="isOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
             <div @click.away="closeModal" class="relative p-6 bg-white rounded-lg shadow-lg w-96">
-                <button x-show="photoPreview && guardianId" @click="deletePhoto"
+                <button x-show="photoPreview && functionaryId" @click="deletePhoto"
                     class="absolute flex items-center justify-center w-8 h-8 text-red-600 transition-colors duration-200 rounded-full top-4 right-4 hover:text-white hover:bg-red-600">
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24"
                         stroke="currentColor">
@@ -146,7 +146,7 @@
                     </svg>
                 </button>
 
-                <h3 class="mb-4 text-lg font-semibold text-gray-800">Foto do Responsável</h3>
+                <h3 class="mb-4 text-lg font-semibold text-gray-800">Foto do Funcionário</h3>
 
                 <template x-if="photoPreview">
                     <img :src="photoPreview" class="object-cover w-full mb-4 border rounded h-60">
@@ -159,7 +159,7 @@
                     </div>
                 </template>
 
-                <form :action="`${updatePhotoUrl}/${guardianId}/photo`" method="POST" enctype="multipart/form-data">
+                <form :action="`${updatePhotoUrl}/${functionaryId}/photo`" method="POST" enctype="multipart/form-data">
                     @csrf
                     @method('PUT')
 
@@ -188,14 +188,14 @@
             function photoModal() {
                 return {
                     isOpen: false,
-                    guardianId: null,
-                    updatePhotoUrl: '{{ url('/guardians') }}',
-                    removePhotoUrl: '{{ url('/guardians') }}',
+                    functionaryId: null,
+                    updatePhotoUrl: '{{ url('/functionaries') }}',
+                    removePhotoUrl: '{{ url('/functionaries') }}',
                     photoPreview: null,
                     isDeleting: false,
 
                     openModal(uuid, url) {
-                        this.guardianId = uuid;
+                        this.functionaryId = uuid;
                         this.photoPreview = url || null;
                         this.isOpen = true;
                     },
@@ -209,20 +209,20 @@
 
                     closeModal() {
                         this.isOpen = false;
-                        this.guardianId = null;
+                        this.functionaryId = null;
                         this.photoPreview = null;
                         const fileInput = document.getElementById('photo');
                         if (fileInput) fileInput.value = '';
                     },
 
                     async deletePhoto() {
-                        if (!this.guardianId) return;
+                        if (!this.functionaryId) return;
 
                         const confirmed = confirm('Deseja realmente excluir a foto?');
                         if (!confirmed) return;
 
                         try {
-                            const response = await fetch(`${this.removePhotoUrl}/${this.guardianId}/remove-photo`, {
+                            const response = await fetch(`${this.removePhotoUrl}/${this.functionaryId}/remove-photo`, {
                                 method: 'DELETE',
                                 headers: {
                                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute(
@@ -233,7 +233,7 @@
 
                             if (!response.ok) throw new Error();
 
-                            window.location.href = '{{ route('guardians.index') }}';
+                            window.location.href = '{{ route('functionaries.index') }}';
                         } catch {
                             alert('Erro ao excluir a foto.');
                         }

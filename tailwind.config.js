@@ -17,7 +17,7 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['Figtree', ...defaultTheme.fontFamily.sans],
+        sans: ['Inter', 'system-ui', 'Avenir', 'Helvetica', 'Arial', ...defaultTheme.fontFamily.sans],
       },
     },
   },

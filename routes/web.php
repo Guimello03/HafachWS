@@ -3,7 +3,13 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\StudentController;
 use App\Http\Controllers\GuardianController;
+use App\Http\Controllers\FunctionaryController;
 
+//Rotas de Funcionários
+Route::delete('functionaries/{functionary}/remove-photo',[FunctionaryController::class,'removePhoto'])->name('functionaries.remove-photo');
+Route::get('functionaries/{functionary}/photo-modal', [FunctionaryController::class, 'photoModal'])->name('functionaries.photo-modal');
+Route::put('/functionaries/{functionary}/photo', [FunctionaryController::class, 'updatePhoto'])->name('functionaries.updatePhoto');
+Route::resource('functionaries', FunctionaryController::class);
 //Rotas de Responsáveis
 
 Route::delete('guardians/{guardian}/remove-photo',[GuardianController::class,'removePhoto'])->name('guardians.remove-photo');
@@ -12,6 +18,7 @@ Route::put('/guardians/{guardian}/photo', [GuardianController::class, 'updatePho
 Route::resource('guardians', GuardianController::class);
 //Rotas de Alunos
 
+Route::patch('/students/{student}/remove-guardian', [StudentController::class, 'removeGuardian'])->name('students.remove-guardian');
 
 Route::put('/students/{student}/photo', [StudentController::class, 'updatePhoto'])->name('students.updatePhoto');
 Route::delete('students/{student}/remove-photo',[StudentController::class,'removePhoto'])->name('students.remove-photo');

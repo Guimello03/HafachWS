@@ -25,6 +25,7 @@ class Student extends Model
         'birth_date',
         'photo_path',
         'uuid',
+        'guardian_id',
     ];
     protected static function booted()
 {
@@ -35,6 +36,10 @@ class Student extends Model
 public function getRouteKeyName()
 {
     return 'uuid';
+}
+public function guardian()
+{
+    return $this->belongsTo(Guardian::class, 'guardian_id', 'uuid');
 }
 
 }

@@ -2,7 +2,7 @@
     <x-breadcrumb :items="$breadcrumbs" />
     <x-slot name="header">
         <h2 class="text-xl font-semibold leading-tight text-center text-gray-800">
-            {{ __('Editar Responsável') }}
+            {{ __('Editar Funcionário') }}
         </h2>
     </x-slot>
 
@@ -15,8 +15,8 @@
                     <label for="uploadPhoto" class="relative cursor-pointer group">
                         <div
                             class="w-32 h-32 overflow-hidden transition-all border-2 border-gray-300 rounded-full shadow-md group-hover:opacity-70">
-                            @if ($guardian->photo_path)
-                                <img id="photoPreview" src="{{ asset('storage/' . $guardian->photo_path) }}"
+                            @if ($functionary->photo_path)
+                                <img id="photoPreview" src="{{ asset('storage/' . $functionary->photo_path) }}"
                                     class="object-cover w-full h-full">
                             @else
                                 <img id="photoPreview" src="https://via.placeholder.com/150"
@@ -34,8 +34,8 @@
                     </label>
 
                     {{-- Remover foto --}}
-                    @if ($guardian->photo_path)
-                        <form action="{{ route('guardians.remove-photo', $guardian) }}" method="POST" class="mt-2">
+                    @if ($functionary->photo_path)
+                        <form action="{{ route('functionaries.remove-photo', $functionary) }}" method="POST" class="mt-2">
                             @csrf
                             @method('DELETE')
                             <button type="submit"
@@ -47,7 +47,7 @@
                 </div>
 
                 {{-- Form de edição --}}
-                <form action="{{ route('guardians.update', $guardian->uuid) }}" method="POST" enctype="multipart/form-data">
+                <form action="{{ route('functionaries.update', $functionary->uuid) }}" method="POST" enctype="multipart/form-data">
                     @csrf
                     @method('PUT')
 
@@ -56,32 +56,32 @@
 
                     <div class="mb-4">
                         <label for="name" class="block mb-2 text-sm font-medium text-gray-900">Nome</label>
-                        <input type="text" name="name" id="name" value="{{ old('name', $guardian->name) }}"
+                        <input type="text" name="name" id="name" value="{{ old('name', $functionary->name) }}"
                             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5">
                     </div>
 
                     <div class="mb-4">
                         <label for="cpf" class="block mb-2 text-sm font-medium text-gray-900">CPF</label>
-                        <input type="text" name="cpf" id="cpf" value="{{ old('cpf', $guardian->cpf) }}"
+                        <input type="text" name="cpf" id="cpf" value="{{ old('cpf', $functionary->cpf) }}"
                             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5">
                     </div>
 
                     <div class="mb-4">
                         <label for="birth_date" class="block mb-2 text-sm font-medium text-gray-900">Data de Nascimento</label>
                         <input type="date" name="birth_date" id="birth_date"
-                            value="{{ old('birth_date', $guardian->birth_date) }}"
+                            value="{{ old('birth_date', $functionary->birth_date) }}"
                             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5">
                     </div>
 
                     <div class="mb-4">
                         <label for="email" class="block mb-2 text-sm font-medium text-gray-900">E-mail</label>
-                        <input type="email" name="email" id="email" value="{{ old('email', $guardian->email) }}"
+                        <input type="email" name="email" id="email" value="{{ old('email', $functionary->email) }}"
                             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5">
                     </div>
 
                     <div class="mb-6">
                         <label for="phone" class="block mb-2 text-sm font-medium text-gray-900">Telefone</label>
-                        <input type="text" name="phone" id="phone" value="{{ old('phone', $guardian->phone) }}"
+                        <input type="text" name="phone" id="phone" value="{{ old('phone', $functionary->phone) }}"
                             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5">
                     </div>
 
@@ -92,13 +92,13 @@
                             Salvar
                         </button>
 
-                        <a href="{{ route('guardians.index') }}"
+                        <a href="{{ route('functionaries.index') }}"
                             class="text-white bg-yellow-500 hover:bg-yellow-600 font-medium rounded-lg text-sm px-6 py-2.5">
                             Voltar
                         </a>
                 </form>
 
-                <form action="{{ route('guardians.destroy', $guardian) }}" method="POST" class="inline-block"
+                <form action="{{ route('functionaries.destroy', $functionary) }}" method="POST" class="inline-block"
                     onsubmit="return confirm('Tem certeza que deseja excluir este responsável?');">
                     @csrf
                     @method('DELETE')

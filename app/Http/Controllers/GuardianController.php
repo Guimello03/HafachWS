@@ -13,6 +13,10 @@ class GuardianController extends Controller
      */
     public function index()
     {
+        $breadcrumbs = [
+            ['label' => 'Dashboard', 'url' => route('dashboard')],
+            ['label' => 'Responsáveis', 'url' => ''], // sem URL porque é a página atual
+        ];
         $search = request('search');
         $guardians = Guardian::query()
             ->when($search, function ($query, $search) {
@@ -24,7 +28,7 @@ class GuardianController extends Controller
              
             
 
-        return view('guardians.index', compact('guardians'));
+        return view('guardians.index', compact('guardians', 'breadcrumbs'));
     }
 
     /**
@@ -32,7 +36,12 @@ class GuardianController extends Controller
      */
     public function create()
     {
-        return view('guardians.create');
+        $breadcrumbs = [
+            ['label' => 'Dashboard', 'url' => route('dashboard')],
+            ['label' => 'Responsáveis', 'url' => route('guardians.index')],
+            ['label' => 'Criar Responsável', 'url' => ''], // sem URL porque é a página atual
+        ];
+        return view('guardians.create', compact('breadcrumbs'));
     }
 
     /**
@@ -71,7 +80,12 @@ class GuardianController extends Controller
      */
     public function edit(Guardian $guardian)
     {
-        return view('guardians.edit', compact('guardian'));
+        $breadcrumbs = [
+            ['label' => 'Dashboard', 'url' => route('dashboard')],
+            ['label' => 'Responsáveis', 'url' => route('guardians.index')],
+            ['label' => 'Editar Responsável', 'url' => ''], // sem URL porque é a página atual
+        ];
+        return view('guardians.edit', compact('guardian', 'breadcrumbs'));
     }
 
     /**
