@@ -4,6 +4,11 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\StudentController;
 use App\Http\Controllers\GuardianController;
 use App\Http\Controllers\FunctionaryController;
+use App\Http\Controllers\DeviceEventController;
+
+
+
+
 
 //Rotas de Funcionários
 Route::delete('functionaries/{functionary}/remove-photo',[FunctionaryController::class,'removePhoto'])->name('functionaries.remove-photo');

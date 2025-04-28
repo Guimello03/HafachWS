@@ -55,7 +55,7 @@
                         </form>
 
                         <a href="{{ route('students.create') }}"
-                            class="flex items-center justify-center h-10 px-4 py-2 font-semibold text-white bg-green-600 border rounded-lg shadow hover:bg-green-700 focus:outline-none focus:ring focus:ring-green-300">
+                            class="flex items-center justify-center h-10 px-4 py-2 font-semibold text-white bg-green-500 border rounded-lg shadow hover:bg-green-600 focus:outline-none focus:ring focus:ring-green-300">
                             Cadastrar
                         </a>
                     </div>
@@ -138,7 +138,7 @@
 
 
                     </table>
-                    <div class="flex justify-end mt-4">
+                    <div class="flex justify-end ">
                         {{ $students->links() }}
                     </div>
                 </div>
