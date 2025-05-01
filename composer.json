@@ -18,7 +18,8 @@
         "laravel/tinker": "^2.10.1",
         "livewire/livewire": "^3.0",
         "spatie/laravel-activitylog": "^4.10",
-        "spatie/laravel-medialibrary": "^11.12"
+        "spatie/laravel-medialibrary": "^11.12",
+        "spatie/laravel-permission": "^6.17"
     },
     "require-dev": {
         "barryvdh/laravel-debugbar": "^3.15",
@@ -34,7 +35,9 @@
     },
     "autoload": {
         "files": [
-            "app/Helpers/BreadcrumbHelper.php"
+            "app/Helpers/BreadcrumbHelper.php",
+            "app/Helpers/school.php"
+
         ],
 
         "psr-4": {

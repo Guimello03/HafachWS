@@ -23,9 +23,3 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 // Rotas de eventos de dispositivos
 Route::get('/device/event/push', [DeviceEventController::class, 'receive']);
 Route::post('/device/event/result', [DeviceEventController::class, 'result']);
-
-// Rotas de Clientes
-Route::apiResource('clients', ClientController::class);
-
-// Rotas de Escolas
-Route::apiResource('schools', SchoolController::class);

@@ -1,48 +1,52 @@
 <x-guest-layout>
-    <x-authentication-card>
-        <x-slot name="logo">
-            <x-authentication-card-logo />
-        </x-slot>
+    <div class="min-h-screen bg-gray-50 flex flex-col justify-center items-center relative overflow-hidden">
 
-        <x-validation-errors class="mb-4" />
+        {{-- Imagem decorativa no fundo --}}
+        
 
-        @session('status')
-            <div class="mb-4 font-medium text-sm text-green-600">
-                {{ $value }}
-            </div>
-        @endsession
+        {{-- Conteúdo principal --}}
+        <div class="w-full max-w-md px-6 py-10  z-10 text-center shadow-md rounded-lg">
+            {{-- Logo --}}
+            <img src="{{ asset('storage/photos/logo-login.png') }}
+" alt="Logo" class="mx-auto mb-6 h-24 ">
 
-        <form method="POST" action="{{ route('login') }}">
-            @csrf
+            <h1 class="text-2xl font-bold text-gray-900">Acesse sua conta</h1>
 
-            <div>
-                <x-label for="email" value="{{ __('Email') }}" />
-                <x-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email')" required autofocus autocomplete="username" />
-            </div>
+            <form method="POST" action="{{ route('login') }}" class="mt-6 space-y-4 text-left">
+                @csrf
 
-            <div class="mt-4">
-                <x-label for="password" value="{{ __('Password') }}" />
-                <x-input id="password" class="block mt-1 w-full" type="password" name="password" required autocomplete="current-password" />
-            </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Seu Email</label>
+                    <input type="email" name="email" required autofocus
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                </div>
 
-            <div class="block mt-4">
-                <label for="remember_me" class="flex items-center">
-                    <x-checkbox id="remember_me" name="remember" />
-                    <span class="ms-2 text-sm text-gray-600">{{ __('Remember me') }}</span>
-                </label>
-            </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Sua Senha</label>
+                    <div class="flex justify-between items-center">
+                        <input type="password" name="password" required
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                        
+                    </div>
+                </div>
 
-            <div class="flex items-center justify-end mt-4">
-                @if (Route::has('password.request'))
-                    <a class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" href="{{ route('password.request') }}">
-                        {{ __('Forgot your password?') }}
-                    </a>
-                @endif
+                <div class="flex items-center">
+                    <input id="remember_me" type="checkbox" name="remember"
+                        class="h-4 w-4 text-indigo-600 border-gray-300 rounded">
+                    <label for="remember_me" class="ml-2 block text-sm text-gray-700">
+                        Lembrar-me neste dispositivo
+                    </label>
+                </div>
 
-                <x-button class="ms-4">
-                    {{ __('Log in') }}
-                </x-button>
-            </div>
-        </form>
-    </x-authentication-card>
+                <button type="submit"
+                    class="w-full bg-blue-500 text-white py-2 rounded-md hover:bg-indigo-500 transition">
+                    Continuar
+                </button>
+            </form>
+
+            <p class="text-xs text-gray-500 mt-8">
+                2025 Ws escola segura – controle de acesso Escolar.<br>Todos os direitos reservados.
+            </p>
+        </div>
+    </div>
 </x-guest-layout>

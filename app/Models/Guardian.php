@@ -17,6 +17,7 @@ class Guardian extends Model
         'birth_date',
         'photo_path',
         'uuid',
+        'school_id',
     ];
     protected static function booted()
     {
@@ -24,6 +25,11 @@ class Guardian extends Model
             $guardian->uuid = (string) \Illuminate\Support\Str::uuid();
         });
     }
+    protected $casts = [
+        'birth_date' => 'date',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+    ];
 
     public function getRouteKeyName()
 {
@@ -33,8 +39,5 @@ public function students()
 {
     return $this->hasMany(Student::class);
 }
-public function guardian()
-{
-    return $this->belongsTo(Guardian::class);
-}
+
 }

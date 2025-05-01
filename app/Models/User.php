@@ -9,6 +9,7 @@ use Illuminate\Notifications\Notifiable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 use Laravel\Jetstream\HasProfilePhoto;
 use Laravel\Sanctum\HasApiTokens;
+use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
 {
@@ -19,6 +20,7 @@ class User extends Authenticatable
     use HasProfilePhoto;
     use Notifiable;
     use TwoFactorAuthenticatable;
+    use HasRoles;
 
     /**
      * The attributes that are mass assignable.
@@ -29,6 +31,8 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'client_id',
+        'uuid',
     ];
 
     /**
@@ -72,5 +76,15 @@ class User extends Authenticatable
 public function client()
 {
     return $this->belongsTo(Client::class);
+}
+protected static function booted()
+    {
+        static::creating(function ($user) {
+            $user->uuid = \Str::uuid();
+        });
+    }
+    public function getRouteKeyName()
+{
+    return 'uuid';
 }
 }

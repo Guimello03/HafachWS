@@ -26,6 +26,7 @@ class Student extends Model
         'photo_path',
         'uuid',
         'guardian_id',
+        'school_id',
     ];
     protected static function booted()
 {
@@ -40,6 +41,12 @@ public function getRouteKeyName()
 public function guardian()
 {
     return $this->belongsTo(Guardian::class, 'guardian_id', 'uuid');
+
 }
+protected $casts = [
+    'birth_date' => 'date',
+    'created_at' => 'datetime',
+    'updated_at' => 'datetime',
+];
 
 }

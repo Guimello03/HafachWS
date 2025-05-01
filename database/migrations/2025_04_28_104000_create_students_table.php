@@ -17,6 +17,9 @@ return new class extends Migration
             $table->string('registration_number')->unique();
             $table->date('birth_date');
             $table->string('photo_path')->nullable();
+            $table->uuid('uuid')->unique();
+            $table->foreignUuid('guardian_id')->nullable()->constrained('guardians', 'uuid')->nullOnDelete();
+            $table->foreignId('school_id')->constrained()->onDelete('cascade');
             $table->timestamps();
         });
     }
@@ -26,6 +29,11 @@ return new class extends Migration
      */
     public function down(): void
     {
+        Schema::table('students', function (Blueprint $table) {
+            $table->dropForeign(['guardian_id']);
+            $table->dropForeign(['school_id']);
+        });
+    
         Schema::dropIfExists('students');
     }
 };

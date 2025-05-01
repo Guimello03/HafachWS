@@ -2,6 +2,21 @@
 @tailwind components;
 @tailwind utilities;
 
+.ts-dropdown .ts-dropdown-content .option {
+    @apply px-4 py-3 text-[15px] text-gray-800 font-medium cursor-pointer border-b border-gray-200 hover:bg-gray-50 transition;
+    min-height: 3.25rem;
+    line-height: 1.5rem;
+  }
+  
+  /* Última opção sem borda */
+  .ts-dropdown .ts-dropdown-content .option:last-child {
+    @apply border-b-0;
+  }
+  
+  /* Opção selecionada */
+  .ts-dropdown .ts-dropdown-content .active {
+    @apply font-semibold text-blue-700 bg-blue-50;
+  }
 [x-cloak] {
-    display: none;
+  display: none;
 }

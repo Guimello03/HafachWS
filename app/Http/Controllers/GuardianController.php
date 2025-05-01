@@ -67,10 +67,10 @@ class GuardianController extends Controller
         return redirect()->route('guardians.index')->with('success', 'Responsável Cadastrado com Sucesso!');
     }
 
-    /**
+    /**s
      * Display the specified resource.
      */
-    public function show(guardian $guardian)
+    public function show(Guardian $guardian)
     {
         //
     }

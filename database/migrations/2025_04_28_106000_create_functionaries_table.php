@@ -11,15 +11,17 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('guardians', function (Blueprint $table) {
+        Schema::create('functionaries', function (Blueprint $table) {
             $table->id();
+            $table->timestamps();
             $table->string('name');
-            $table->string('email')->unique();
-            $table->string('phone')->nullable();
             $table->string('cpf')->unique();
+            $table->string('phone')->nullable();
+            $table->string('email')->unique();
             $table->date('birth_date');
             $table->string('photo_path')->nullable();
-            $table->timestamps();
+            $table->uuid('uuid')->unique();
+            $table->foreignId('school_id')->constrained()->onDelete('cascade');
         });
     }
 
@@ -28,6 +30,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('guardians');
+        Schema::dropIfExists('functionaries');
+        
     }
 };

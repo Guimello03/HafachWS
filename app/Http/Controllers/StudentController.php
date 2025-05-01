@@ -29,7 +29,7 @@ class StudentController extends Controller
     })
     ->orderBy('name')
     ->paginate(10);
-    
+     
     
 
 
@@ -78,7 +78,7 @@ class StudentController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Student $studant)
+    public function show(Student $student)
     {
         //
     }

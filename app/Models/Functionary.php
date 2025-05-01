@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 
-class functionary extends Model
+class Functionary extends Model
 {
     
     use HasFactory;
@@ -19,6 +19,7 @@ class functionary extends Model
         'birth_date',
         'photo_path',
         'uuid',
+        'school_id',
 
         
     ];
@@ -28,6 +29,11 @@ class functionary extends Model
             $functionary->uuid = (string) Str::uuid();
         });
     }
+    protected $casts = [
+        'birth_date' => 'date',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+    ];
     public function getRouteKeyName()
     {
         return 'uuid';

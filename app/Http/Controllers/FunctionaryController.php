@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
-use App\Models\functionary;
+use App\Models\Functionary;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -19,7 +19,7 @@ class FunctionaryController extends Controller
             ['label' => 'Funcionários', 'url' => ''], // sem URL porque é a página atual
         ];
         $search = $request->input('search');
-        $functionaries = functionary::query()
+        $functionaries = Functionary::query()
     ->when($search, function ($query, $search) {
         $query->where('name', 'like', "%{$search}%")
               ->orWhere('cpf', 'like', "%{$search}%");
@@ -64,72 +64,72 @@ class FunctionaryController extends Controller
             $validated['photo_path'] = $path;
         }
 
-        functionary::create($validated);
+        Functionary::create($validated);
 
         return redirect()->route('functionaries.index')->with('success', 'Funcionário criado com sucesso!');
     }
     /**
      * Display the specified resource.
      */
-    public function show(functionary $functionary){
+    public function show(Functionary $Functionary){
 
     }
 
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(functionary $functionary)
+    public function edit(Functionary $Functionary)
     {
         $breadcrumbs = [
             ['label' => 'Dashboard', 'url' => route('dashboard')],
             ['label' => 'Funcionários', 'url' => route('functionaries.index')],
             ['label' => 'Editar Funcionário', 'url' => ''], // sem URL porque é a página atual
         ];
-        return view('functionaries.edit', compact('functionary', 'breadcrumbs'));
+        return view('functionaries.edit', compact('Functionary', 'breadcrumbs'));
     }
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, functionary $functionary)
+    public function update(Request $request, Functionary $Functionary)
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'cpf' => 'required|string|max:255|unique:functionaries,cpf,' . $functionary->id,
+            'cpf' => 'required|string|max:255|unique:functionaries,cpf,' . $Functionary->id,
             'phone' => 'nullable|string|max:255',
-            'email' => 'required|email|max:255|unique:functionaries,email,' . $functionary->id,
+            'email' => 'required|email|max:255|unique:functionaries,email,' . $Functionary->id,
             'birth_date' => 'required|date',
             'photo' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
         ]);
 
         if ($request->hasFile('photo')) {
             // Delete the old photo if it exists
-            if ($functionary->photo_path) {
-                Storage::disk('public')->delete($functionary->photo_path);
+            if ($Functionary->photo_path) {
+                Storage::disk('public')->delete($Functionary->photo_path);
             }
             $path = $request->file('photo')->store('photos', 'public');
             $validated['photo_path'] = $path;
         }
 
-        $functionary->update($validated);
+        $Functionary->update($validated);
 
         return redirect()->route('functionaries.index')->with('success', 'Funcionário atualizado com sucesso!');
     }
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(functionary $functionary)
+    public function destroy(Functionary $Functionary)
     {
-        if ($functionary->photo_path && Storage::disk('public')->exists($functionary->photo_path)) {
-            Storage::disk('public')->delete($functionary->photo_path);
+        if ($Functionary->photo_path && Storage::disk('public')->exists($Functionary->photo_path)) {
+            Storage::disk('public')->delete($Functionary->photo_path);
         }
-        $functionary->delete();
+        $Functionary->delete();
         return redirect()->route('functionaries.index')->with('success', 'Funcionário excluído com sucesso!');
     }
-    public function removePhoto(functionary $functionary)
+    public function removePhoto(Functionary $Functionary)
     {
-        if ($functionary->photo_path && Storage::disk('public')->exists($functionary->photo_path)) {
-            Storage::disk('public')->delete($functionary->photo_path);
-            $functionary->update(['photo_path' => null]);
+        if ($Functionary->photo_path && Storage::disk('public')->exists($Functionary->photo_path)) {
+            Storage::disk('public')->delete($Functionary->photo_path);
+            $Functionary->update(['photo_path' => null]);
             if (request()->wantsJson()) {
                 return response()->json(['message' => 'Foto removida com sucesso!']);
             }
@@ -147,7 +147,7 @@ class FunctionaryController extends Controller
         
 
 }
-    public function updatePhoto(Request $request, functionary $functionary)
+    public function updatePhoto(Request $request, Functionary $Functionary)
     {
         $validated = $request->validate([
             'photo' => 'required|image|mimes:jpeg,png,jpg|max:2048',
@@ -155,16 +155,16 @@ class FunctionaryController extends Controller
 
         if ($request->hasFile('photo')) {
             // Delete the old photo if it exists
-            if ($functionary->photo_path) {
-                Storage::disk('public')->delete($functionary->photo_path);
+            if ($Functionary->photo_path) {
+                Storage::disk('public')->delete($Functionary->photo_path);
             }
             $path = $request->file('photo')->store('photos', 'public');
             $validated['photo_path'] = $path;
         }
 
-        $functionary->update($validated);
+        $Functionary->update($validated);
 
-        return redirect()->route('functionaries.edit', $functionary->uuid)->with('success', 'Foto atualizada com sucesso!');
+        return redirect()->route('functionaries.edit', $Functionary->uuid)->with('success', 'Foto atualizada com sucesso!');
     }
 }
 
