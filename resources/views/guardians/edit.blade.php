@@ -51,51 +51,52 @@
                     @csrf
                     @method('PUT')
 
-                    <input type="file" name="photo" id="uploadPhoto" accept="image/*" class="hidden"
+                    <input type="file" name="photo_path" id="uploadPhoto" accept="image/*" class="hidden"
                         onchange="previewPhoto(event)">
 
                     <div class="mb-4">
                         <label for="name" class="block mb-2 text-sm font-medium text-gray-900">Nome</label>
                         <input type="text" name="name" id="name" value="{{ old('name', $guardian->name) }}"
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5">
+                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
                     </div>
 
                     <div class="mb-4">
                         <label for="cpf" class="block mb-2 text-sm font-medium text-gray-900">CPF</label>
-                        <input type="text" name="cpf" id="cpf" value="{{ old('cpf', $guardian->cpf) }}"
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5">
+                        <input type="text" name="cpf" x-data x-init="new Cleave($el, { delimiters: ['.', '.', '-'], blocks: [3, 3, 3, 2], numericOnly: true })" id="cpf" value="{{ old('cpf', $guardian->cpf) }}"
+                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
                     </div>
 
                     <div class="mb-4">
                         <label for="birth_date" class="block mb-2 text-sm font-medium text-gray-900">Data de Nascimento</label>
                         <input type="date" name="birth_date" id="birth_date"
-                            value="{{ old('birth_date', $guardian->birth_date) }}"
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5">
+                           value="{{ old('birth_date', ($guardian->birth_date)->format('Y-m-d')) }}"
+                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
                     </div>
 
                     <div class="mb-4">
                         <label for="email" class="block mb-2 text-sm font-medium text-gray-900">E-mail</label>
                         <input type="email" name="email" id="email" value="{{ old('email', $guardian->email) }}"
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5">
+                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
                     </div>
 
                     <div class="mb-6">
                         <label for="phone" class="block mb-2 text-sm font-medium text-gray-900">Telefone</label>
-                        <input type="text" name="phone" id="phone" value="{{ old('phone', $guardian->phone) }}"
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5">
+                        <input type="text" name="phone" x-init="new Cleave($el, {
+                            delimiters: ['(', ') ', '-', ''],
+                            blocks: [0, 2, 5, 4],
+                            numericOnly: true
+                        })" id="phone" value="{{ old('phone', $guardian->phone) }}"
+                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
                     </div>
 
                     {{-- Botões --}}
-                    <div class="flex justify-center gap-4 mt-4">
+                    <div class="flex justify-end gap-4 mt-4">
                         <button type="submit"
                             class="text-white bg-blue-600 hover:bg-blue-800 font-medium rounded-lg text-sm px-6 py-2.5">
                             Salvar
                         </button>
 
-                        <a href="{{ route('guardians.index') }}"
-                            class="text-white bg-yellow-500 hover:bg-yellow-600 font-medium rounded-lg text-sm px-6 py-2.5">
-                            Voltar
-                        </a>
+                        
                 </form>
 
                 <form action="{{ route('guardians.destroy', $guardian) }}" method="POST" class="inline-block"

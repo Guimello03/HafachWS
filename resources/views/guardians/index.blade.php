@@ -42,10 +42,10 @@
                         <form method="GET" action="{{ route('guardians.index') }}">
                             <input type="text" name="search" value="{{ request('search') }}"
                                 placeholder="Buscar por nome ou CPF"
-                                class="h-10 px-4 py-2 border rounded-lg shadow-sm w-[400px]" />
+                                class="h-10 px-4 py-2  shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition w-[400px] border rounded-lg" />
                         </form>
                         <a href="{{ route('guardians.create') }}"
-                            class="flex items-center justify-center h-10 px-4 py-2 font-semibold text-white bg-green-500 border rounded-lg shadow hover:bg-green-600 focus:outline-none focus:ring focus:ring-green-300">
+                            class="flex items-center justify-center h-10 px-4 py-2 font-semibold text-white bg-blue-500 border rounded-lg shadow hover:bg-blue-600 focus:outline-none focus:ring focus:ring-blue-300">
                             Cadastrar
                         </a>
                     </div>

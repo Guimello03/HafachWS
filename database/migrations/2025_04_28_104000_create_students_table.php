@@ -17,9 +17,16 @@ return new class extends Migration
             $table->string('registration_number')->unique();
             $table->date('birth_date');
             $table->string('photo_path')->nullable();
+        
             $table->uuid('uuid')->unique();
+        
+            
             $table->foreignUuid('guardian_id')->nullable()->constrained('guardians', 'uuid')->nullOnDelete();
-            $table->foreignId('school_id')->constrained()->onDelete('cascade');
+        
+            
+            $table->uuid('school_id');
+            $table->foreign('school_id')->references('uuid')->on('schools')->onDelete('cascade');
+        
             $table->timestamps();
         });
     }

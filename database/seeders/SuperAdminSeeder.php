@@ -1,6 +1,7 @@
 <?php
 
 namespace Database\Seeders;
+use Spatie\Permission\Models\Role;
 
 use Illuminate\Database\Seeder;
 use App\Models\User;
@@ -13,10 +14,16 @@ class SuperAdminSeeder extends Seeder
      */
     public function run(): void
     {
+        foreach (['super_admin', 'client_admin', 'school_director'] as $role) {
+            Role::firstOrCreate([
+                'name' => $role,
+                'guard_name' => 'web',
+            ]);
+        }
         // Cria o usuário Super Admin
         $user = User::create([
-            'name' => 'Super Admin',
-            'email' => 'admin@admin.com',
+            'name' => 'Guilherme Mello',
+            'email' => 'admin@hafachws.com.br',
             'password' => Hash::make('password'), // Senha inicial segura
         ]);
 

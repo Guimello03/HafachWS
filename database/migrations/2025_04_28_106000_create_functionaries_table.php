@@ -20,8 +20,10 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->date('birth_date');
             $table->string('photo_path')->nullable();
-            $table->uuid('uuid')->unique();
-            $table->foreignId('school_id')->constrained()->onDelete('cascade');
+            $table->uuid('uuid')->unique(); // identificador principal externo
+            // ✅ Corrigido para usar uuid
+            $table->uuid('school_id');
+            $table->foreign('school_id')->references('uuid')->on('schools')->onDelete('cascade');
         });
     }
 

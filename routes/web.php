@@ -7,6 +7,7 @@ use App\Http\Controllers\StudentController;
 use App\Http\Controllers\GuardianController;
 use App\Http\Controllers\FunctionaryController;
 use App\Http\Controllers\SchoolSelectionController;
+use App\Http\Controllers\UserController;
 
 /*
 |--------------------------------------------------------------------------
@@ -27,21 +28,30 @@ use App\Http\Controllers\SchoolSelectionController;
 Route::get('/dashboard', function () {
     return view('dashboard');
 })->middleware(['auth', 'ensure.school.selected'])->name('dashboard');
+
 //------------------- Área de Seleção de Escola-----------------
 Route::middleware(['auth','role:super_admin|client_admin'])->group(function () {
     Route::get('/select-school', [SchoolSelectionController::class, 'index'])->name('select.school');
-    Route::post('/select-school', [SchoolSelectionController::class, 'clientAdmin'])->name('select.school.store');
+   
 });
 // ----------------- Área Super Admin -----------------
 Route::middleware(['auth','ensure.school.selected' ,  'role:super_admin'])->group(function () {
+    Route::get('/clients/{client}/school.create', [SchoolController::class, 'create'])->name('clients.schools.index');
+    Route::post('/schools.create', [SchoolController::class, 'store'])->name('schools.store');
+
     Route::resource('clients', ClientController::class);
-    Route::post('clients-and-school', [ClientController::class, 'storeClientAndSchool']);
+    Route::get('/clients/{client}/schools', [ClientController::class, 'schools'])->name('clients.schools');
+    Route::get('/schools/{school}/edit', [SchoolController::class, 'edit'])->name('schools.edit');
+    Route::post('clients-and-school', [ClientController::class, 'storeClientAndSchool']);  
     Route::get('admin/dashboard', [ClientController::class, 'adminDashboard'])->name('admin.dashboard');
+    
 });
 
 // ----------------- Área Super Admin + Client Admin -----------------
 Route::middleware(['auth','ensure.school.selected' ,  'role:super_admin|client_admin'])->group(function () {
-    Route::resource('schools', SchoolController::class)->except(['create', 'edit']);
+    //Route::resource('schools', SchoolController::class)->except(['create', 'edit']);
+    Route::post('/schools/director', [UserController::class, 'storeDirector'])
+    ->name('schools.director.store');
     
 });
 
@@ -53,6 +63,7 @@ Route::middleware(['auth','ensure.school.selected' ,  'role:super_admin|client_a
     Route::get('students/{student}/photo-modal', [StudentController::class, 'photoModal'])->name('students.photo-modal');
     Route::delete('students/{student}/remove-photo', [StudentController::class, 'removePhoto'])->name('students.remove-photo');
     Route::patch('students/{student}/remove-guardian', [StudentController::class, 'removeGuardian'])->name('students.remove-guardian');
+    //Route::get('students/search-students', [StudentController::class, 'searchStudents'])->name('students.search');
 
     // Guardians
     Route::resource('guardians', GuardianController::class);
@@ -65,7 +76,17 @@ Route::middleware(['auth','ensure.school.selected' ,  'role:super_admin|client_a
     Route::put('functionaries/{functionary}/photo', [FunctionaryController::class, 'updatePhoto'])->name('functionaries.updatePhoto');
     Route::get('functionaries/{functionary}/photo-modal', [FunctionaryController::class, 'photoModal'])->name('functionaries.photo-modal');
     Route::delete('functionaries/{functionary}/remove-photo', [FunctionaryController::class, 'removePhoto'])->name('functionaries.remove-photo');
+
+    // School
+    Route::get('/schools', [SchoolController::class, 'dashboard'])->name('school.dashboard');
+    Route::put('/school/{user}/update-password', [UserController::class, 'updatePassword'])
+    ->name('director.update-password');
 });
+
+
+
+
+
 
 // Auth routes
 

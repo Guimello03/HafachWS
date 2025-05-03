@@ -6,6 +6,8 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use App\Models\School;
+use Illuminate\Support\Facades\Log;
 
 class UserController extends Controller
 {
@@ -53,4 +55,46 @@ class UserController extends Controller
             'user' => $newUser->only(['id', 'name', 'email']),
         ], 201);
     }
+    public function storeDirector(Request $request)
+{
+    $request->validate([
+        'name' => 'required|string|max:255',
+        'email' => 'required|email|unique:users,email',
+        'password' => 'required|string|min:8',
+        'school_id' => 'required|exists:schools,uuid',
+    ]);
+
+    $school = School::where('uuid', $request->school_id)->firstOrFail();
+
+    // Garante que a escola ainda não tem diretor
+    if ($school->users()->role('school_director')->exists()) {
+        return back()->withErrors(['Esta escola já possui um diretor associado.']);
+    }
+
+    $user = User::create([
+        'name' => $request->name,
+        'email' => $request->email,
+        'password' => Hash::make($request->password),
+        'client_id' => $school->client_id,
+    ]);
+
+    $user->assignRole('school_director');
+    $school->users()->attach($user->id);
+
+    return back()->with('success', 'Diretor criado com sucesso!');
+}
+public function updatePassword(Request $request, User $user)
+{
+
+    Log::info('Diretor sendo atualizado', ['user_id' => $user->id]);
+    $request->validate([
+        'password' => 'required|string|min:8',
+    ]);
+
+    $user->update([
+        'password' => Hash::make($request->password),
+    ]);
+
+    return redirect()->route('school.dashboard')->with('success', 'Senha atualizada com sucesso!');
+}
 }

@@ -33,6 +33,7 @@ class User extends Authenticatable
         'password',
         'client_id',
         'uuid',
+        'last_school_uuid',
     ];
 
     /**
@@ -70,7 +71,14 @@ class User extends Authenticatable
     }
     public function schools()
 {
-    return $this->belongsToMany(School::class, 'school_user');
+    return $this->belongsToMany(
+        School::class,
+        'school_user',
+        'user_id',
+        'school_id',
+        'id',
+        'uuid'
+    );
 }
 
 public function client()

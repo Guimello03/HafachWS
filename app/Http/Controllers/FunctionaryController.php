@@ -18,14 +18,19 @@ class FunctionaryController extends Controller
             ['label' => 'Dashboard', 'url' => route('dashboard')],
             ['label' => 'Funcionários', 'url' => ''], // sem URL porque é a página atual
         ];
-        $search = $request->input('search');
-        $functionaries = Functionary::query()
-    ->when($search, function ($query, $search) {
-        $query->where('name', 'like', "%{$search}%")
-              ->orWhere('cpf', 'like', "%{$search}%");
-    })
-    ->orderBy('name')
-    ->paginate(10);
+        $school = activeSchool();
+        if (!$school) {
+            return redirect()->route('dashboard');
+        }
+        $query = Functionary::where('school_id', $school->uuid);
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('cpf', 'like', "%{$search}%");
+            });
+        }
+        $functionaries = $query->orderBy('name')->paginate(10);
         
         return view('functionaries.index', compact('functionaries', 'breadcrumbs'));
     }
@@ -50,6 +55,11 @@ class FunctionaryController extends Controller
      */
     public function store(Request $request)
     {
+        $school = activeSchool();
+        if (!$school) {
+            return redirect()->route('dashboard');
+        }
+        $request->merge(['school_id' => $school->uuid]);
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'cpf' => 'required|string|max:255|unique:functionaries',
@@ -57,6 +67,7 @@ class FunctionaryController extends Controller
             'email' => 'required|email|max:255|unique:functionaries',
             'birth_date' => 'required|date',
             'photo' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            'school_id' => 'required|uuid|exists:schools,uuid',
         ]);
 
         if ($request->hasFile('photo')) {
@@ -78,14 +89,14 @@ class FunctionaryController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Functionary $Functionary)
+    public function edit(Functionary $functionary)
     {
         $breadcrumbs = [
             ['label' => 'Dashboard', 'url' => route('dashboard')],
             ['label' => 'Funcionários', 'url' => route('functionaries.index')],
             ['label' => 'Editar Funcionário', 'url' => ''], // sem URL porque é a página atual
         ];
-        return view('functionaries.edit', compact('Functionary', 'breadcrumbs'));
+        return view('functionaries.edit', compact('functionary', 'breadcrumbs'));
     }
     /**
      * Update the specified resource in storage.
@@ -164,7 +175,7 @@ class FunctionaryController extends Controller
 
         $Functionary->update($validated);
 
-        return redirect()->route('functionaries.edit', $Functionary->uuid)->with('success', 'Foto atualizada com sucesso!');
+        return redirect()->route('functionaries.index', $Functionary->uuid)->with('success', 'Foto atualizada com sucesso!');
     }
 }
 

@@ -71,43 +71,48 @@ class ClientWizard extends Component
     }
 
     public function submit()
-    {
-        $this->validate(array_merge($this->rulesStep1, $this->rulesStep2)); // Valida tudo
+{
+    $this->validate(array_merge($this->rulesStep1, $this->rulesStep2)); // Valida tudo
 
-        DB::beginTransaction();
+    DB::beginTransaction();
 
-        try {
-            // Criar o Client
-            $client = Client::create($this->clientData);
+    try {
+        // Criar o Client
+        $client = Client::create($this->clientData);
 
-            // Criar o adminUser (client_admin)
-            $adminUser = User::create([
-                'name' => $this->clientData['name'],
-                'email' => $this->adminUserData['email'],
-                'password' => bcrypt($this->adminUserData['password']),
-                'client_id' => $client->id,
-            ]);
-            $adminUser->assignRole('client_admin');
+        // Criar o adminUser (client_admin)
+        $adminUser = User::create([
+            'name' => $this->clientData['name'],
+            'email' => $this->adminUserData['email'],
+            'password' => bcrypt($this->adminUserData['password']),
+            'client_id' => $client->id,
+        ]);
+        $adminUser->assignRole('client_admin');
 
-            // Criar a primeira School vinculada ao Client
-            $school = School::create([
-                'name' => $this->schoolData['name'],
-                'cnpj' => $this->schoolData['cnpj'],
-                'client_id' => $client->id,
-            ]);
+        // Criar a primeira School vinculada ao Client
+        $school = School::create([
+            'name' => $this->schoolData['name'],
+            'cnpj' => $this->schoolData['cnpj'],
+            'client_id' => $client->id,
+        ]);
 
-            // Vincular o client_admin à escola criada
-            $adminUser->schools()->attach($school->id);
+        // Vincular o client_admin à escola criada
+        $adminUser->schools()->attach((string) $school->uuid);
 
-            DB::commit();
+        // ✅ ESSENCIAL: Definir escola padrão pro login funcionar
+        $adminUser->update([
+            'last_school_uuid' => (string) $school->uuid,
+        ]);
 
-            session()->flash('success', 'Cliente, administrador e escola cadastrados e vinculados com sucesso!');
-            return redirect()->route('admin.dashboard');
+        DB::commit();
 
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('Erro ao criar cliente: ' . $e->getMessage());
-            $this->addError('submit', 'Erro técnico ao salvar os dados. Tente novamente.');
-        }
+        session()->flash('success', 'Cliente, administrador e escola cadastrados e vinculados com sucesso!');
+        return redirect()->route('admin.dashboard');
+
+    } catch (\Exception $e) {
+        DB::rollBack();
+        Log::error('Erro ao criar cliente: ' . $e->getMessage());
+        $this->addError('submit', 'Erro técnico ao salvar os dados. Tente novamente.');
     }
+}
 }

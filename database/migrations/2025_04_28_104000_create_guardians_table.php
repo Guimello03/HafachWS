@@ -20,7 +20,9 @@ return new class extends Migration
             $table->date('birth_date');
             $table->string('photo_path')->nullable();
             $table->uuid('uuid')->unique();
-            $table->foreignId('school_id')->constrained()->onDelete('cascade');
+            $table->uuid('school_id');
+            $table->foreign('school_id')->references('uuid')->on('schools')->onDelete('cascade');
+        
             $table->timestamps();
         });
     }

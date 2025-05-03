@@ -2,21 +2,35 @@
 @tailwind components;
 @tailwind utilities;
 
-.ts-dropdown .ts-dropdown-content .option {
-    @apply px-4 py-3 text-[15px] text-gray-800 font-medium cursor-pointer border-b border-gray-200 hover:bg-gray-50 transition;
+/* === Estilo global para Tom Select === */
+
+/* Estilo base para o controle */
+.ts-control {
+    @apply px-4 py-2 transition-all bg-white border border-gray-300 rounded-md shadow-sm;
+  }
+  
+  /* Foco azul no input ao clicar */
+  .ts-wrapper.focus .ts-control {
+    @apply bg-white border-blue-500 ring-2 ring-blue-500;
+  }
+  
+  /* Dropdown das opções */
+  .ts-dropdown .ts-dropdown-content .option {
+    @apply px-4 py-3 text-[15px] text-gray-800 font-medium cursor-pointer border-b border-gray-500 hover:bg-gray-200 transition;
     min-height: 3.25rem;
     line-height: 1.5rem;
   }
   
-  /* Última opção sem borda */
+  /* Remove borda inferior da última opção */
   .ts-dropdown .ts-dropdown-content .option:last-child {
     @apply border-b-0;
   }
   
   /* Opção selecionada */
   .ts-dropdown .ts-dropdown-content .active {
-    @apply font-semibold text-blue-700 bg-blue-50;
+    @apply font-normal text-black bg-white;
   }
+  
 [x-cloak] {
   display: none;
 }

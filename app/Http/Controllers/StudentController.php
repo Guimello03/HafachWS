@@ -16,27 +16,33 @@ class StudentController extends Controller
      * Display a listing of the resource.
      */
     public function index(Request $request)
-    {
-        $breadcrumbs = [
-            ['label' => 'Dashboard', 'url' => route('dashboard')],
-            ['label' => 'Alunos', 'url' => ''], // sem URL porque é a página atual
-        ];
-        $search = $request->input('search');
-        $students = Student::query()
-    ->when($search, function ($query, $search) {
-        $query->where('name', 'like', "%{$search}%")
-              ->orWhere('registration_number', 'like', "%{$search}%");
-    })
-    ->orderBy('name')
-    ->paginate(10);
-     
-    
+{
+    $breadcrumbs = [
+        ['label' => 'Dashboard', 'url' => route('dashboard')],
+        ['label' => 'Alunos', 'url' => ''], // sem URL porque é a página atual
+    ];
+    $school = activeSchool();
 
-
-
-
-        return view('students.index', compact('students', 'breadcrumbs'));
+    if (!$school) {
+        return redirect()->route('dashboard')->with('error', 'Escola ativa não definida.');
     }
+
+    $query = Student::where('school_id', $school->uuid);
+
+    if ($search = $request->input('search')) {
+        $query->where(function ($q) use ($search) {
+            $q->where('name', 'like', "%{$search}%")
+              ->orWhere('registration_number', 'like', "%{$search}%");
+        });
+    }
+
+    $students = $query->paginate(10);
+
+    return view('students.index', compact('students', 'breadcrumbs'));
+}
+
+
+
 
     /**
      * Show the form for creating a new resource.
@@ -58,12 +64,18 @@ class StudentController extends Controller
      */
     public function store(Request $request)
     {
+        $school = activeSchool();
+        if (!$school) {
+            return redirect()->route('dashboard')->with('error', 'Escola não encontrada.');
+        }
+        $request->merge(['school_id' => $school->uuid]);
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'registration_number' => 'required|string|max:255|unique:students',
             'birth_date' => 'required|date',
             'photo' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
             'guardian_id' => 'nullable|exists:guardians,uuid',
+            'school_id' => 'required|exists:schools,uuid',
         ]);
         if ($request->hasFile('photo')) {
             $path = $request->file('photo')->store('photos', 'public');
@@ -95,7 +107,10 @@ class StudentController extends Controller
             ['label' => 'Editar Aluno', 'url' => ''], // sem URL porque é a página atual
         ];
         
-        $guardians = \App\Models\Guardian::all();
+        $guardians = Guardian::where('school_id', $student->school_id)->get();
+        if ($student->guardian_id) {
+            $guardians = $guardians->where('uuid', '!=', $student->guardian_id);
+        }
         
 
         return view('students.edit', compact('student', 'guardians', 'breadcrumbs'));
@@ -110,18 +125,18 @@ class StudentController extends Controller
             'name' => 'required|string|max:255',
             'registration_number' => 'required|string|max:255|unique:students,registration_number,'. $student->id,
             'birth_date' => 'required|date',
-            'photo' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            'photo_path' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
             'guardian_id' => 'nullable|exists:guardians,uuid',
         ]);
         
 
 
-        if ($request->hasFile('photo')) {
+        if ($request->hasFile('photo_path')) {
             // Delete the old photo if it exists
             if ($student->photo_path) {
                 Storage::disk('public')->delete($student->photo_path);
             }
-            $path = $request->file('photo')->store('photos', 'public');
+            $path = $request->file('photo_path')->store('photos', 'public');
 
             $validated['photo_path'] = $path;
         }
@@ -202,4 +217,8 @@ public function removeGuardian(Student $student)
 
 }
 
+
+
 }
+
+

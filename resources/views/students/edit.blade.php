@@ -51,13 +51,13 @@
                     @csrf
                     @method('PUT')
 
-                    <input type="file" name="photo" id="uploadPhoto" accept="image/*" class="hidden"
+                    <input type="file" name="photo_path" id="uploadPhoto" accept="image/*" class="hidden"
                         onchange="previewPhoto(event)">
 
                     <div class="mb-4">
                         <label for="name" class="block mb-2 text-sm font-medium text-gray-900">Nome</label>
                         <input type="text" name="name" id="name" value="{{ old('name', $student->name) }}"
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5">
+                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
                     </div>
 
                     <div class="mb-4">
@@ -65,15 +65,15 @@
                             class="block mb-2 text-sm font-medium text-gray-900">Matrícula</label>
                         <input type="text" name="registration_number" id="registration_number"
                             value="{{ old('registration_number', $student->registration_number) }}"
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5">
+                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
                     </div>
 
                     <div class="mb-6">
                         <label for="birth_date" class="block mb-2 text-sm font-medium text-gray-900">Data de
                             Nascimento</label>
                         <input type="date" name="birth_date" id="birth_date"
-                            value="{{ old('birth_date', $student->birth_date) }}"
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5">
+                            value="{{ old('birth_date', $student->birth_date)->format('Y-m-d') }}"
+                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
                     </div>
 
                     @if ($student->guardian_id == null)
@@ -82,7 +82,7 @@
                             <label for="guardian_id" class="block mb-2 text-sm font-medium text-gray-900">Responsável
                                 Legal</label>
                             <select id="guardian_id" name="guardian_id" placeholder="Digite para buscar..."
-                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5">
+                            class="w-full text-sm focus:outline-none">
                                 @foreach ($guardians as $guardian)
                                     <option value="{{ $guardian->uuid }}"
                                         {{ old('guardian_id', $student->guardian_id) == $guardian->id ? 'selected' : '' }}>
@@ -114,7 +114,7 @@
                         </button>
 
                 </form>
-                <!-- Botão Excluir (FORA do form principal) -->
+                <!-- Botão Excluir-->
 
                 <form action="{{ route('students.destroy', $student) }}" method="POST"
                     onsubmit="return confirm('Tem certeza que deseja excluir este aluno?');">
@@ -132,12 +132,12 @@
 
         @if ($student->guardian_id != null)
             <!-- Card do Responsável -->
-            <div class="hidden w-1/4 p-6 pt-4  bg-white border  rounded-lg shadow-md lg:block h-[190px]">
+            <div class="hidden w-1/4 p-6 pt-4  bg-white border  rounded-lg shadow-md lg:block h-[205px]">
                 <span class="block mb-1 text-xs font-medium text-gray-400 uppercase">Responsável Legal</span>
 
                 <div class="flex items-start justify-between">
                     <div>
-                        <h2 class="text-lg font-bold text-gray-800">{{ $student->guardian->name }}</h2>
+                        <h2 class="text-base font-bold text-gray-800">{{ $student->guardian->name }}</h2>
 
                         <div class="grid grid-cols-2 gap-2 mt-4 text-sm text-gray-600">
                             <div>

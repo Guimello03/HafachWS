@@ -55,7 +55,7 @@
                     <div class="mb-4">
                         <label for="name" class="block mb-2 text-sm font-medium text-gray-900">Nome</label>
                         <input type="text" name="name" id="name" value="{{ old('name') }}"
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5"
+                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
                             required>
                     </div>
 
@@ -65,7 +65,7 @@
                             class="block mb-2 text-sm font-medium text-gray-900">Matrícula</label>
                         <input type="text" name="registration_number" id="registration_number"
                             value="{{ old('registration_number') }}"
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5"
+                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
                             required>
                     </div>
 
@@ -74,21 +74,18 @@
                         <label for="birth_date" class="block mb-2 text-sm font-medium text-gray-900">Data de
                             Nascimento</label>
                         <input type="date" name="birth_date" id="birth_date" value="{{ old('birth_date') }}"
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5"
+                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
                             required>
                     </div>
 
                     <!-- Botões -->
-                    <div class="flex justify-center gap-4 mt-4">
+                    <div class="flex justify-end gap-4 mt-4">
                         <button type="submit"
                             class="text-white bg-blue-600 hover:bg-blue-800 font-medium rounded-lg text-sm px-6 py-2.5">
                             Salvar
                         </button>
 
-                        <a href="{{ route('students.index') }}"
-                            class="text-white bg-yellow-500 hover:bg-yellow-600 font-medium rounded-lg text-sm px-6 py-2.5">
-                            Voltar
-                        </a>
+                        
                     </div>
                 </form>
             </div>

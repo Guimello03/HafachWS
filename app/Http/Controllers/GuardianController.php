@@ -11,25 +11,35 @@ class GuardianController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
-    {
-        $breadcrumbs = [
-            ['label' => 'Dashboard', 'url' => route('dashboard')],
-            ['label' => 'Responsáveis', 'url' => ''], // sem URL porque é a página atual
-        ];
-        $search = request('search');
-        $guardians = Guardian::query()
-            ->when($search, function ($query, $search) {
-                $query->where('name', 'like', "%{$search}%")
-                    ->orWhere('cpf', 'like', "%{$search}%");
-            })
-            ->orderBy('name')
-            ->paginate(10);
-             
-            
+    public function index(Request $request)
+{
+    $breadcrumbs = [
+        ['label' => 'Dashboard', 'url' => route('dashboard')],
+        ['label' => 'Responsáveis', 'url' => ''], // Página atual
+    ];
 
-        return view('guardians.index', compact('guardians', 'breadcrumbs'));
+    $school = activeSchool();
+
+    if (!$school) {
+        return redirect()->route('schools.select');
     }
+
+    $query = Guardian::where('school_id', $school->uuid);
+
+    if ($request->filled('search')) {
+        $search = $request->input('search');
+
+        $query->where(function ($q) use ($search) {
+            $q->where('name', 'like', "%{$search}%")
+              ->orWhere('cpf', 'like', "%{$search}%");
+        });
+    }
+
+    $guardians = $query->orderBy('name')->paginate(10);
+
+    return view('guardians.index', compact('guardians', 'breadcrumbs'));
+}
+
 
     /**
      * Show the form for creating a new resource.
@@ -49,17 +59,25 @@ class GuardianController extends Controller
      */
     public function store(Request $request)
     {
+
+        $school = activeSchool();
+        if (!$school) {
+            return redirect()->route('/');
+        }
+        $request->merge(['school_id' => $school->uuid]);
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'cpf' => 'required|string|max:255|unique:guardians',
             'phone' => 'nullable|string|max:255',
             'email' => 'required|email|max:255|unique:guardians',
             'birth_date' => 'required|date',
-            'photo' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            'photo_path' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            'school_id' => 'required|exists:schools,uuid',
         ]);
 
-        if ($request->hasFile('photo')) {
-            $path = $request->file('photo')->store('photos', 'public');
+        if ($request->hasFile('photo_path')) {
+            $path = $request->file('photo_path')->store('photos', 'public');
             $validated['photo_path'] = $path;
         }
 
@@ -99,11 +117,16 @@ class GuardianController extends Controller
             'phone' => 'nullable|string|max:255',
             'email' => 'required|email|max:255|unique:guardians,email,' . $guardian->id,
             'birth_date' => 'required|date',
-            'photo' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            'photo_path' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            
         ]);
 
-        if ($request->hasFile('photo')) {
-            $path = $request->file('photo')->store('photos', 'public');
+        if ($request->hasFile('photo_path')) {
+            // Delete the old photo if it exists
+            if ($guardian->photo_path) {
+                Storage::disk('public')->delete($guardian->photo_path);
+            }
+            $path = $request->file('photo_path')->store('photos', 'public');
             $validated['photo_path'] = $path;
         }
 
@@ -162,5 +185,3 @@ class GuardianController extends Controller
         return redirect()->route('guardians.index')->with('success', 'Foto atualizada com sucesso!');
     }
 }
-
-

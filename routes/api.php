@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\DeviceEventController;
+use App\Http\Controllers\DeviceCommandController;
 use App\Http\Controllers\SchoolController;
 
 /*
@@ -21,5 +22,5 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 });
 
 // Rotas de eventos de dispositivos
-Route::get('/device/event/push', [DeviceEventController::class, 'receive']);
-Route::post('/device/event/result', [DeviceEventController::class, 'result']);
+Route::get('/device/push', [DeviceCommandController::class, 'getPendingCommand']);
+Route::post('/device/result', [DeviceCommandController::class, 'storeCommandResult']);

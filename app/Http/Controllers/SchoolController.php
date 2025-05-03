@@ -6,46 +6,112 @@ use App\Models\School;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use App\Models\Client;
+use App\Models\Guardian;
 
 class SchoolController extends Controller
 {
-    public function index()
+    public function dashboard (Request $request)
+    
     {
-        return School::orderBy('name')->get();
+        $school=activeSchool();
+        if (!$school) {
+            return redirect()->route('dashboard')->with('error', 'Escola ativa não definida.');
+        }
+
+        $director = $school->users()
+        ->role('school_director')
+        ->first();
+
+        $breadcrumbs = [
+            ['label' => 'Dashboard', 'url' => route('dashboard')],
+            ['label' => 'Escola', 'url' => ''],
+            ];
+        return view('school.index', compact('school', 'breadcrumbs', 'director'));
+    }
+    
+    public function create(Client $client)
+    {
+        $breadcrumbs = [
+            ['label' => 'Dashboard', 'url' => route('dashboard')],
+            ['label' => 'Clientes', 'url' => route('admin.dashboard')],
+            ['label' => 'Criar Escola', 'url' => ''], // sem URL porque é a página atual
+        ];
+        return view('admin.schools.create', compact('client', 'breadcrumbs', ));
     }
 
-    public function store(Request $request)
-    {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'address' => 'nullable|string|max:255',
-            'cnpj' => 'nullable|string|max:18',
-            'client_id' => 'required|exists:clients,id',
-        ]);
 
-        $school = School::create($request->validate());
+public function index(Client $client, Request $request)
+{
+    $search = $request->input('search');
 
-        return response()->json($school, 201);
+    $schools = $client->schools()
+        ->when($search, fn($query) => $query->where('name', 'like', "%$search%"))
+        ->get();
+
+    return view('clients.schools', compact('client', 'schools'));
+}
+
+public function store(Request $request)
+{
+    $validated = $request->validate([
+        'name' => 'required|string|max:255',
+        'address' => 'nullable|string|max:255',
+        'cnpj' => 'nullable|string|max:18',
+        'client_id' => 'required|exists:clients,id',
+    ]);
+
+    $validated['uuid'] = (string) \Illuminate\Support\Str::uuid();
+
+    $school = School::create($validated);
+
+    // 🔗 Vincula automaticamente o client_admin desse client à escola
+    $admin = \App\Models\User::where('client_id', $school->client_id)
+                ->role('client_admin')
+                ->first();
+                
+
+                if ($admin && !$school->users()->where('user_id', $admin->id)->exists()) {
+                    
+        $school->users()->attach($admin->id);
     }
+
+    return redirect()
+        ->route('clients.schools', $request->client_id)
+        ->with('success', 'Escola criada com sucesso!');
+}
+
 
     public function show(School $school)
     {
         return response()->json($school);
     }
+    public function edit(School $school)
+{
+    $breadcrumbs = [
+        ['label' => 'Dashboard', 'url' => route('dashboard')],
+        ['label' => 'Clientes', 'url' => route('admin.dashboard')],
+        ['label' => 'Escolas', 'url' => route('clients.schools', $school->client_id)],
+        ['label' => 'Editar Escola', 'url' => ''], // sem URL porque é a página atual
+    ];
+    $client = $school->client;
+    return view('admin.schools.edit', compact('school', 'client', 'breadcrumbs'));
+}
 
-    public function update(Request $request, School $school)
-    {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'address' => 'nullable|string|max:255',
-            'cnpj' => 'nullable|string|max:18',
-            'client_id' => 'required|exists:clients,id',
-        ]);
+public function update(Request $request, School $school)
+{
+    $validated = $request->validate([
+        'name' => 'required|string|max:255',
+        'address' => 'nullable|string|max:255',
+        'cnpj' => 'nullable|string|max:18',
+    ]);
 
-        $school->update($request->all());
+    $school->update($validated);
 
-        return response()->json($school);
-    }
+    return redirect()
+        ->route('clients.schools', $school->client_id)
+        ->with('success', 'Escola atualizada com sucesso!');
+}
 
     public function destroy(School $school)
     {
@@ -53,6 +119,7 @@ class SchoolController extends Controller
 
         return response()->json(['message' => 'Escola excluída com sucesso!']);
     }
+
     public function getByClient(Request $request)
     {
         // Se for super_admin, pegar o client_id vindo da requisição
@@ -68,11 +135,10 @@ class SchoolController extends Controller
         }
 
         $schools = School::where('client_id', $clientId)
-            ->select('id', 'name')
+            ->select('uuid', 'name')
             ->orderBy('name')
             ->get();
 
         return response()->json($schools);
     }
 }
-

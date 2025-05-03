@@ -4,10 +4,10 @@ use App\Models\School;
 
 if (!function_exists('activeSchool')) {
     function activeSchool() {
-        $schoolId = session('school_id');
+        $schoolUuid = session('school_id');
 
-        return $schoolId
-            ? School::with('client')->find($schoolId)
+        return $schoolUuid
+            ? School::with('client')->where('uuid', $schoolUuid)->first()
             : null;
     }
 }

@@ -7,16 +7,33 @@ use Illuminate\Http\Request;
 use App\Models\School;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Database\Eloquent\CollectionorderBy;
 
 class ClientController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $clients =  Client::all();
-        return view('admin.index', compact('clients'));
+        $breadcrumbs = [
+            ['label' => 'Dashboard', 'url' => route('dashboard')],
+            ['label' => 'Clientes', 'url' => ''], // sem URL porque é a página atual
+        ];
+        $search = $request->input('search');
+        $clients = Client::query()
+
+    ->where(function ($query) use ($search) {
+        $query->where('name', 'like', "%{$search}%")
+              ->orWhere('cnpj', 'like', "%{$search}%");
+    })
+    ->orderBy('name')
+    ->paginate(10);
+
+
+        return view('admin.index', compact('clients', 'breadcrumbs'));
 
     }
 
@@ -64,25 +81,50 @@ class ClientController extends Controller
     public function edit(Client $client)
     
     {
-        //
+        $clientAdmin = $client->users()->role('client_admin')->first();
+
+    $breadcrumbs = [
+        ['label' => 'Dashboard', 'url' => route('dashboard')],
+        ['label' => 'Clientes', 'url' => route('admin.dashboard')],
+        ['label' => 'Editar Cliente', 'url' => ''], // sem URL porque é a página atual
+    ];
+        $client->load('schools'); // Eager loading
+    return view('admin.clients.edit', compact('client', 'breadcrumbs', 'clientAdmin'));
     }
 
     /**
      * Update the specified resource in storage.
      */
     public function update(Request $request, Client $client)
-    
-    {
-        $request->validate([
-            'name' => 'sometimes|required|string|max:255',
-            'email' => 'sometimes|required|email|max:255|unique:client,email,' . $client,
-            'cnpj' => 'sometimes|required|string|max:14|unique:client,cnpj,' . $client,
-        ]);
+{
+    // Validação dos dados
+    $validated = $request->validate([
+        'name' => 'sometimes|required|string|max:255',
+        'email' => 'sometimes|required|email|max:255|unique:clients,email,' . $client->id,
+        'cnpj'  => 'sometimes|required|string|max:18|unique:clients,cnpj,' . $client->id,
+        'admin_password' => 'nullable|string|min:6',
+    ]);
 
-        $client->update($request->all());
+    // Atualiza os campos do cliente
+    $client->update([
+        'name' => $validated['name'] ?? $client->name,
+        'email' => $validated['email'] ?? $client->email,
+        'cnpj' => $validated['cnpj'] ?? $client->cnpj,
+    ]);
 
-        return response()->json($client);
+    // Atualiza a senha do client_admin, se informada
+    if ($request->filled('admin_password')) {
+        $clientAdmin = $client->users()->role('client_admin')->first();
+        if ($clientAdmin) {
+            $clientAdmin->update([
+                'password' => bcrypt($request->admin_password),
+            ]);
+        }
     }
+
+    return redirect()->route('admin.dashboard', $client->id)
+        ->with('success', 'Cliente atualizado com sucesso!');
+}
 
     /**
      * Remove the specified resource from storage.
@@ -106,4 +148,14 @@ class ClientController extends Controller
 
         return view('admin.index', compact('clients', 'schools', 'breadcrumbs'));
     }
+    public function schools(Client $client)
+{
+    $breadcrumbs = [
+        ['label' => 'Dashboard', 'url' => route('dashboard')],
+        ['label' => 'Clientes', 'url' => route('admin.dashboard')],
+        ['label' => 'Escolas do Cliente', 'url' => ''], // sem URL porque é a página atual
+    ];
+    $schools = $client->schools; // Puxa as escolas desse client
+    return view('admin.clients.schools', compact('client', 'schools', 'breadcrumbs'));
+}
 }

@@ -2,61 +2,48 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
-use Illuminate\Support\Facades\Auth;
 use App\Models\School;
-use App\Models\User;
-use App\Models\Client;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 
 class SchoolSelectionController extends Controller
 {
     public function index()
     {
-        $schools = Auth::user()->schools; // escolas do client_admin
+        $schools = Auth::user()->schools; // escolas visíveis pelo usuário logado
         return view('select-school', compact('schools'));
     }
 
     public function store(Request $request)
-{
-    $user = Auth::user();
+    {
+        $user = Auth::user()->load('schools'); // carrega as escolas do usuário logado
+        
+        
+        if ($user->hasRole('super_admin')) {
+            $request->validate([
+                'school_id' => 'required|exists:schools,uuid',
+            ]);
+        } else {
+            $request->validate([
+                'school_id' => [
+                    'required',
+                    Rule::in($user->schools->pluck('uuid')->toArray()),
+                ],
+            ]);
+        }
 
-    if ($user->hasRole('super_admin')) {
-        // Super admin pode escolher qualquer escola válida
-        $request->validate([
-            'school_id' => 'required|exists:schools,id',
+        
+        $school = School::where('uuid', $request->school_id)->firstOrFail();
+        
+
+        // Salva na sessão e persiste no usuário
+        session(['school_id' => (string) $school->uuid]);
+
+        $user->update([
+            'last_school_uuid' => (string) $school->uuid,
         ]);
-    } else {
-        // Outros só podem escolher entre as escolas que têm acesso
-        $request->validate([
-            'school_id' => [
-                'required',
-                Rule::in($user->schools->pluck('id')->toArray()),
-            ],
-        ]);
+
+        return response()->json(['success' => true]);
     }
-
-    session(['school_id' => $request->school_id]);
-
-    $user->update(['last_school_id' => $request->school_id]);
-
-    return response()->json(['success' => true]);
-}
-
-public function clientAdmin(Request $request)
-{
-    $user = Auth::user();
-
-    $request->validate([
-        'school_id' => [
-            'required',
-            Rule::in($user->schools->pluck('id')->toArray()),
-        ],
-    ]);
-
-    session(['school_id' => $request->school_id]);
-    $user->update(['last_school_id' => $request->school_id]);
-
-    return response()->json(['success' => true]);
-}
 }
