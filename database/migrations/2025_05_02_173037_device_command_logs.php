@@ -14,8 +14,16 @@ return new class extends Migration {
             $table->timestamps();
 
             $table->primary(['device_id', 'device_group_command_id']);
-            $table->foreign('device_id')->references('id')->on('devices')->onDelete('cascade');
-            $table->foreign('device_group_command_id')->references('id')->on('device_group_commands')->onDelete('cascade');
+
+            $table->foreign('device_id')
+                ->references('uuid')
+                ->on('devices')
+                ->onDelete('cascade');
+
+            $table->foreign('device_group_command_id')
+                ->references('uuid')
+                ->on('device_group_commands')
+                ->onDelete('cascade');
         });
     }
 

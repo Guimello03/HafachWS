@@ -68,17 +68,17 @@
                         <div>
                             <label class="block text-sm font-medium">Nome</label>
                             <input type="text" value="{{ $school->name }}" disabled
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
+                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
                         </div>
                         <div>
                             <label class="block text-sm font-medium">Razão Social</label>
                             <input type="text" value="{{ $school->corporate_name ?? '' }}" disabled
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
+                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
                         </div>
                         <div>
                             <label class="block text-sm font-medium">CNPJ</label>
                             <input type="text" value="{{ $school->cnpj }}" disabled
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
+                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
                         </div>
                     </div>
 
@@ -95,7 +95,7 @@
                             <div>
                                 <label class="block text-sm font-medium">Email</label>
                                 <input type="email" value="{{ $director->email }}" disabled
-                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
+                                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
                             </div>
                             <form method="POST" action="{{ route('director.update-password', $director) }}">
                                 @csrf
@@ -106,7 +106,7 @@
 
                                 <label class="block text-sm font-medium">Nova Senha</label>
                                 <input type="password" name="password" required
-                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
+                                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
                                 <button type="submit"
                                     class="px-4 py-2 mt-2 text-sm font-semibold text-white bg-blue-600 rounded hover:bg-blue-700">
                                     Atualizar Senha
@@ -124,47 +124,85 @@
                             <div>
                                 <label class="block text-sm font-medium">Nome</label>
                                 <input type="text" name="name" required
-                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
+                                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
                             </div>
                             <div>
                                 <label class="block text-sm font-medium">Email</label>
                                 <input type="email" name="email" required
-                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
+                                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
                             </div>
-                            <div>
-                                <label class="block text-sm font-medium">Senha</label>
-                                <input type="password" name="password" required
-                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
-                            </div>
+                            <div class="md:col-span-2 md:flex md:items-end md:gap-4">
+                                <div class="flex-1">
+                                    <label class="block text-sm font-medium">Senha</label>
+                                    <input type="password" name="password" required
+                                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-[300px] p-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
+                                </div>
 
-                            {{-- ⬇️ Botão alinhado à direita ocupando as 2 colunas --}}
-                            <div class="flex items-end justify-end mt-2 md:col-span-2">
-                                <button type="submit"
-                                    class="px-4 py-2 text-sm font-semibold text-white bg-green-600 rounded hover:bg-green-700">
-                                    Criar Diretor
-                                </button>
+                                <div class="mt-2 md:mt-0">
+                                    <button type="submit"
+                                        class="px-4 py-2 text-sm font-semibold text-left text-white bg-green-600 rounded hover:bg-green-700">
+                                        Criar Diretor
+                                    </button>
+                                </div>
                             </div>
                         </form>
                     @endif
                 </div>
+            </div>
 
-                {{-- CONTROLE DE ACESSO --}}
-                <div x-show="tab === 'acesso'" x-cloak>
-                    <h3 class="mb-4 text-lg font-semibold text-gray-700">Controle de Acesso</h3>
-                    <p class="text-gray-600">Gerencie os papéis, permissões e níveis de acesso para os usuários desta
-                        escola.</p>
-                    <!-- Aqui você pode incluir selects, checkboxes, etc. -->
+            <!-- ... tudo acima permanece idêntico ... -->
+
+            {{-- CONTROLE DE ACESSO --}}
+            <div x-show="tab === 'acesso'" x-cloak>
+
+                {{-- Título e botão soltos sobre fundo da página --}}
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-gray-700">Acessos</h3>
+
+                    <a href="{{ route('groups.index') }}"
+                        class="px-4 py-2 text-sm font-semibold text-white bg-blue-500 rounded hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400">
+                        Gerenciar Equipamentos
+                    </a>
                 </div>
 
-                {{-- QR CODE --}}
-                <div x-show="tab === 'qr'" x-cloak>
-                    <h3 class="mb-4 text-lg font-semibold text-gray-700">QR Code de Acesso</h3>
-                    <p class="mb-2 text-gray-600">Utilize este código para acessar diretamente a página da escola.</p>
-                    <div class="inline-block p-4 border rounded-lg bg-gray-50">
-                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://escola.app/school/123"
-                            alt="QR Code">
-                    </div>
+                {{-- Área de cards responsiva --}}
+                <div class="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
+                    @foreach ($groups as $group)
+                        <div
+                            class="p-4 bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow">
+                            <h4 class="text-lg font-semibold text-gray-800">{{ $group->name }}</h4>
+                            <p class="mt-1 text-sm text-gray-500">Dispositivos: {{ $group->devices->count() }}</p>
+
+                            {{-- Botões de ação --}}
+                            <div class="flex gap-2 mt-4">
+                                {{-- Livewire de Pessoas --}}
+                                <livewire:manage-group-persons :group="$group" />
+
+                                {{-- Slot extra se quiser equipamento aqui depois --}}
+                                {{-- <a href="#" class="btn btn-secondary">Gerenciar Equipamentos</a> --}}
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+
+            </div>
+
+
+
+
+
+            {{-- QR CODE --}}
+            <div x-show="tab === 'qr'" x-cloak>
+                <h3 class="mb-4 text-lg font-semibold text-gray-700">QR Code de Acesso</h3>
+                <p class="mb-2 text-gray-600">Utilize este código para acessar diretamente a página da escola.</p>
+                <div class="inline-block p-4 border rounded-lg bg-gray-50">
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://escola.app/school/123"
+                        alt="QR Code">
                 </div>
             </div>
         </div>
+    </div>
+
+
+
 </x-admin-layout>

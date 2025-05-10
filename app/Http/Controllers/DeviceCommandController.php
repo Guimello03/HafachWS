@@ -4,83 +4,111 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Device;
-use App\Models\DeviceGroupCommand;
 use App\Models\DeviceCommandLog;
-use Illuminate\Support\Facades\Log;
+use App\Http\Requests\StoreCommandResultRequest;
+use App\Http\Resources\DeviceCommandResource;
+use App\Enums\CommandStatus;
+use App\Enums\DeviceCommandLogs;
+use App\Services\Devices\Handlers\UserCreationResponseHandler;
 
 class DeviceCommandController extends Controller
 {
     public function getPendingCommand(Request $request)
-    {
-        $serial = $request->get('deviceId');
-        $device = Device::where('serial_number', $serial)->first();
+{
+    $serial = $request->get('deviceId');
+    $device = Device::where('serial_number', $serial)->firstOrFail();
 
-        if (!$device) {
-            return response()->json(['error' => 'Device not found.'], 404);
-        }
+    // 1. Buscar o log com status 'pending' e comando 'sent'
+    $log = DeviceCommandLog::where('device_id', $device->uuid)
+        ->where('status', CommandStatus::Pending)
+        ->whereHas('command', function ($q) {
+            $q->where('status', CommandStatus::Sent);
+        })
+        ->first();
 
-        $command = DeviceGroupCommand::where('device_group_id', $device->device_group_id)
-            ->where('status', 'pending')
-            ->whereDoesntHave('logs', fn ($q) => $q->where('device_id', $device->id))
-            ->orderBy('created_at')
-            ->first();
+    if (!$log) {
+        return response()->noContent(); // 204
+    }
+   
 
-        if (!$command) {
-            return response()->noContent(); // 204 No Content
-        }
+    // 2. Recuperar o comando vinculado
+    $command = $log->command;
+    logger()->info('[getPendingCommand] Entregando comando ao equipamento', [
+        'device_id' => $device->uuid,
+        'command' => $command->payload['body']['object'] ?? null,
+        'endpoint' => $command->payload['endpoint'] ?? null,
+        'command_uuid' => $command->uuid,
+    ]);
 
-        Log::info('COMMAND PAYLOAD ENVIADO PARA O DEVICE:', [
-            'comando' => $command->id,
-            'payload' => $command->payload,
-        ]);
-
-        DeviceCommandLog::create([
-            'device_id' => $device->id,
-            'device_group_command_id' => $command->id,
-            'status' => 'pending',
-        ]);
-
-        return response()->json([
-            'command_id' => $command->id,
-            'verb' => $command->payload['verb'],
-            'endpoint' => $command->payload['endpoint'],
-            'body' => $command->payload['body'],
-            'contentType' => $command->payload['contentType'],
-        ]);
+    // 3. Mapeamento cache → equipamento x comando
+    $equipmentUuid = $request->get('uuid');
+    if ($equipmentUuid) {
+        cache()->put("cmdmap:{$equipmentUuid}:{$device->uuid}", $command->uuid, now()->addMinutes(5));
     }
 
-    public function storeCommandResult(Request $request)
+    // 4. Atualiza log como "em entrega"
+    DeviceCommandLog::logDelivery($device, $command);
+
+    // 5. Retorna o comando para o equipamento
+    return response()->json([
+        'command_id'  => $command->uuid,
+        'verb'        => $command->payload['verb'] ?? 'POST',
+        'endpoint'    => $command->payload['endpoint'] ?? '',
+        'body'        => $command->payload['body'] ?? [],
+        'contentType' => $command->payload['contentType'] ?? 'application/json',
+    ]);
+}
+
+    public function storeCommandResult(\App\Http\Requests\StoreCommandResultRequest $request)
+
     {
-        Log::info('DEVICE POST RESULT:', $request->all());
+       
 
-        $request->validate([
-            'deviceId' => 'required|string',
-            'commandId' => 'required|integer',
-            'status' => 'required|in:success,error',
-        ]);
+        logger()->info('[storeCommandResult] Request recebido', $request->all());
 
-        $serial = $request->get('deviceId');
-        $commandId = $request->get('commandId');
-        $status = $request->get('status');
+        $device = \App\Models\Device::where('serial_number', $request->input('deviceId'))->firstOrFail();
 
-        $device = Device::where('serial_number', $serial)->first();
-        if (!$device) {
-            return response()->json(['error' => 'Device not found'], 404);
+        $equipmentUuid = $request->input('uuid');
+        $deviceId = $device->uuid;
+
+        $commandUuid = cache()->pull("cmdmap:{$equipmentUuid}:{$deviceId}");
+
+        if (!$commandUuid) {
+            abort(404, 'Comando não encontrado (expirado ou inexistente).');
         }
 
-        $log = DeviceCommandLog::where('device_id', $device->id)
-            ->where('device_group_command_id', $commandId)
-            ->first();
+       
+        $log = \App\Models\DeviceCommandLog::where('device_id', $device->uuid)
+            ->where('device_group_command_id', $commandUuid)
+            ->firstOrFail();
 
-        if (!$log) {
-            return response()->json(['error' => 'Command log not found'], 404);
-        }
+            $logStatus = $request->getStatusEnum();
 
-        $log->update([
-            'status' => $status,
-            'executed_at' => now(),
+            
+
+        $log->markAsExecuted($logStatus);
+
+        logger()->info('[storeCommandResult] Log encontrado', [
+            'device_id'  => $log->device_id,
+            'command_id' => $log->device_group_command_id,
         ]);
 
-        return response()->json(['message' => 'Result logged successfully'], 200);
+        // 🧠 Aqui estava o erro! Estava usando CommandStatus::Pending indevidamente.
+        $log->command->tryMarkAsCompleted();
+
+        $response = $request->input('response');
+        $decoded = is_string($response) ? json_decode($response, true) : $response;
+        $endpoint = $log->command->payload['endpoint'] ?? null;
+
+        if ($endpoint === 'create_objects' && isset($decoded['ids']) && is_array($decoded['ids'])) {
+            \App\Services\Devices\Handlers\UserCreationResponseHandler::handle([
+                'ids'      => $decoded['ids'],
+                'deviceId' => $device->uuid,
+                'uuid'     => $commandUuid,
+                'endpoint' => $endpoint,
+            ]);
+        }
+
+        return response()->json(['message' => 'Result logged successfully']);
     }
 }

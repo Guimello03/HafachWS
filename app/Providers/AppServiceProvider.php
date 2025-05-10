@@ -8,6 +8,12 @@ use Illuminate\Support\Facades\View;
 use App\Models\Client;
 use App\Models\School;
 
+// 📌 Importações novas:
+use App\Models\Student;
+use App\Models\Guardian;
+use App\Models\Functionary;
+use App\Observers\DeviceGroupPersonObserver;
+
 class AppServiceProvider extends ServiceProvider
 {
     /**
@@ -23,6 +29,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // 📌 Registrar o observer para os três modelos
+        Student::observe(DeviceGroupPersonObserver::class);
+        Guardian::observe(DeviceGroupPersonObserver::class);
+        Functionary::observe(DeviceGroupPersonObserver::class);
+
         // Apenas no layout principal: carregar lista de clientes (para super admin)
         View::composer('components.admin-layout', function ($view) {
             $clients = [];
@@ -36,12 +47,10 @@ class AppServiceProvider extends ServiceProvider
 
         // Em todas as views: carregar escola ativa com cliente incluso
         View::composer('*', function ($view) {
-            $school = session('school_id')
-                ? School::with('client')->find(session('school_id'))
-                : null;
-
-            $view->with('activeSchool', $school);
+            $view->with('activeSchool', activeSchool());
         });
+
+            
 
         Paginator::useTailwind();
     }

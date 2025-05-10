@@ -12,7 +12,7 @@
 
                 {{-- Foto de perfil --}}
                 <div class="flex flex-col items-center justify-center mb-6">
-                    <label for="uploadPhoto" class="relative cursor-pointer group">
+                    <label for="uploadPhoto"  class="relative cursor-pointer group">
                         <div
                             class="w-32 h-32 overflow-hidden transition-all border-2 border-gray-300 rounded-full shadow-md group-hover:opacity-70">
                             @if ($functionary->photo_path)
@@ -47,11 +47,11 @@
                 </div>
 
                 {{-- Form de edição --}}
-                <form action="{{ route('functionaries.update', $functionary->uuid) }}" method="POST" enctype="multipart/form-data">
+                <formmethod="POST" enctype="multipart/form-data" action="{{ route('functionaries.update', $functionary->uuid) }}">
                     @csrf
                     @method('PUT')
 
-                    <input type="file" name="photo" id="uploadPhoto" accept="image/*" class="hidden"
+                    <input type="file" name="photo_path" id="uploadPhoto" accept="image/*" class="hidden"
                         onchange="previewPhoto(event)">
 
                     <div class="mb-4">

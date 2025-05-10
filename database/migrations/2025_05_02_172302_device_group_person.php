@@ -13,7 +13,11 @@ return new class extends Migration {
             $table->timestamps();
 
             $table->primary(['device_group_id', 'person_id', 'person_type']);
-            $table->foreign('device_group_id')->references('id')->on('device_groups')->onDelete('cascade');
+
+            $table->foreign('device_group_id')
+                ->references('uuid')
+                ->on('device_groups')
+                ->onDelete('cascade');
         });
     }
 

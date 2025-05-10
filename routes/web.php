@@ -8,6 +8,8 @@ use App\Http\Controllers\GuardianController;
 use App\Http\Controllers\FunctionaryController;
 use App\Http\Controllers\SchoolSelectionController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\DeviceGroupController;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -81,6 +83,19 @@ Route::middleware(['auth','ensure.school.selected' ,  'role:super_admin|client_a
     Route::get('/schools', [SchoolController::class, 'dashboard'])->name('school.dashboard');
     Route::put('/school/{user}/update-password', [UserController::class, 'updatePassword'])
     ->name('director.update-password');
+
+    // Device Groups
+   
+Route::delete('/device_group/{deviceGroup/destroy', [DeviceGroupController::class, 'destroy']);
+    Route::put('/device_groups/{deviceGroup}', [DeviceGroupController::class, 'update']);
+    Route::post('/groups_groups/auto-target', [DeviceGroupController::class, 'setAutoTargets'])
+    ->name('groups.auto_target');
+    Route::post('/device-groups', [\App\Http\Controllers\DeviceGroupController::class, 'store'])
+    ->name('device_groups.store');
+    Route::resource('groups', \App\Http\Controllers\DeviceGroupController::class);
+   
+    
+
 });
 
 

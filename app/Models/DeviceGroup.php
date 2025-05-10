@@ -4,43 +4,45 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class DeviceGroup extends Model
 {
     use HasFactory;
 
+    protected $table = 'device_groups';
+    protected $primaryKey = 'uuid';
     protected $keyType = 'string';
     public $incrementing = false;
 
-    protected $fillable = ['id', 'school_id', 'name', 'type'];
+    protected $fillable = ['uuid', 'school_id', 'name'];
 
     protected static function booted()
     {
         static::creating(function ($model) {
-            if (empty($model->{$model->getKeyName()})) {
-                $model->{$model->getKeyName()} = (string) Str::uuid();
+            if (empty($model->uuid)) {
+                $model->uuid = (string) Str::uuid();
+            }
+        });
+
+        static::updating(function ($model) {
+            if ($model->isDirty('uuid')) {
+                $model->uuid = $model->getOriginal('uuid');
             }
         });
     }
 
-    public function school(): BelongsTo
+    public function getRouteKeyName()
     {
-        return $this->belongsTo(School::class);
+        return 'uuid';
     }
 
-    public function allPeople()
+    public function school(): BelongsTo
     {
-        return $this->morphToMany(
-            Model::class,
-            'person',
-            'device_group_person',
-            'device_group_id',
-            'person_id'
-        )->withPivot('person_type')->withTimestamps();
+        return $this->belongsTo(School::class, 'school_id', 'uuid');
     }
 
     public function students()
@@ -76,15 +78,25 @@ class DeviceGroup extends Model
         )->withPivot('person_type')->withTimestamps();
     }
 
-    
-
     public function autoTargets(): HasMany
     {
-        return $this->hasMany(DeviceGroupAutoTarget::class);
+        return $this->hasMany(DeviceGroupAutoTarget::class, 'device_group_id', 'uuid');
     }
 
     public function devices(): BelongsToMany
+    {
+        return $this->belongsToMany(Device::class, 'device_device_group', 'device_group_id', 'device_id');
+    }
+
+    public function allPeople(): \Illuminate\Support\Collection
+    {
+        return collect()
+            ->merge($this->students)
+            ->merge($this->guardians)
+            ->merge($this->functionaries);
+    }
+    public function commands(): \Illuminate\Database\Eloquent\Relations\HasMany
 {
-    return $this->belongsToMany(Device::class, 'device_device_group');
+    return $this->hasMany(\App\Models\DeviceGroupCommand::class, 'device_group_id', 'uuid');
 }
 }

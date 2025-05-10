@@ -8,6 +8,8 @@ use Illuminate\Support\Str;
 class School extends Model
 {
     use HasFactory;
+    protected $primaryKey = 'uuid'; 
+
 
     protected $fillable = [
         'name',
@@ -43,19 +45,14 @@ class School extends Model
 
     public function users()
     {
-        return $this->belongsToMany(
-            User::class,
-            'school_user',   // nome da tabela pivot
-            'school_id',     // chave local na pivot (UUID da school)
-            'user_id',       // chave do user na pivot
-            'uuid',          // PK da school
-            'id'             // PK do user
-        );
+        return $this->belongsToMany(User::class, 'school_user', 'school_id', 'user_id')->withTimestamps();
+
     }
     public function deviceGroups()
 {
-    return $this->hasMany(DeviceGroup::class);
+    return $this->hasMany(DeviceGroup::class, 'school_id', 'uuid'); // ✅ Correto!
 }
+
 
 public function devices()
 {

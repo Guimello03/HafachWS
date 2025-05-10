@@ -66,16 +66,17 @@ class FunctionaryController extends Controller
             'phone' => 'nullable|string|max:255',
             'email' => 'required|email|max:255|unique:functionaries',
             'birth_date' => 'required|date',
-            'photo' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            'photo_path' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
             'school_id' => 'required|uuid|exists:schools,uuid',
         ]);
-
-        if ($request->hasFile('photo')) {
-            $path = $request->file('photo')->store('photos', 'public');
-            $validated['photo_path'] = $path;
+       $functionary =  Functionary::create($validated);
+        if ($request->hasFile('photo_path')) {
+            $filename = $functionary->uuid . '.jpg';
+            $path = $request->file('photo_path')->storeAs('users/photos', $filename, 'public');
+            $functionary->update(['photo_path' => $path]);
         }
 
-        Functionary::create($validated);
+        
 
         return redirect()->route('functionaries.index')->with('success', 'Funcionário criado com sucesso!');
     }
@@ -101,27 +102,31 @@ class FunctionaryController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Functionary $Functionary)
+    public function update(Request $request, Functionary $functionary)
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'cpf' => 'required|string|max:255|unique:functionaries,cpf,' . $Functionary->id,
+            'cpf' => 'required|string|max:255|unique:functionaries,cpf,' . $functionary->uuid . ',uuid',
             'phone' => 'nullable|string|max:255',
-            'email' => 'required|email|max:255|unique:functionaries,email,' . $Functionary->id,
+            'email' => 'required|email|max:255|unique:functionaries,email,' . $functionary->uuid . ',uuid',
             'birth_date' => 'required|date',
-            'photo' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            'photo_path' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
         ]);
+        $functionary->update($validated);
 
-        if ($request->hasFile('photo')) {
+
+        if ($request->hasFile('photo_path')) {
             // Delete the old photo if it exists
-            if ($Functionary->photo_path) {
-                Storage::disk('public')->delete($Functionary->photo_path);
+            if ($functionary->photo_path) {
+                Storage::disk('public')->delete($functionary->photo_path);
             }
-            $path = $request->file('photo')->store('photos', 'public');
-            $validated['photo_path'] = $path;
+            $filename = $functionary->uuid . '.jpg';
+            $path = $request->file('photo_path')->storeAs('users/photos', $filename, 'public');
+            $functionary->update([
+                'photo_path' => $path
+            ]);
         }
 
-        $Functionary->update($validated);
 
         return redirect()->route('functionaries.index')->with('success', 'Funcionário atualizado com sucesso!');
     }
@@ -158,24 +163,25 @@ class FunctionaryController extends Controller
         
 
 }
-    public function updatePhoto(Request $request, Functionary $Functionary)
+    public function updatePhoto(Request $request, Functionary $functionary)
     {
         $validated = $request->validate([
             'photo' => 'required|image|mimes:jpeg,png,jpg|max:2048',
         ]);
 
-        if ($request->hasFile('photo')) {
+        if ($request->hasFile('photo_path')) {
             // Delete the old photo if it exists
-            if ($Functionary->photo_path) {
-                Storage::disk('public')->delete($Functionary->photo_path);
+            if ($functionary->photo_path) {
+                Storage::disk('public')->delete($functionary->photo_path);
             }
-            $path = $request->file('photo')->store('photos', 'public');
-            $validated['photo_path'] = $path;
+            $filename = $functionary->uuid . '.jpg';
+            $path = $request->file('photo_path')->storeAs('users/photos', $filename, 'public');
+            $functionary->update([
+                'photo_path' => $path
+            ]);
         }
 
-        $Functionary->update($validated);
-
-        return redirect()->route('functionaries.index', $Functionary->uuid)->with('success', 'Foto atualizada com sucesso!');
+        return redirect()->route('functionaries.index')->with('success', 'Foto atualizada com sucesso!');
     }
 }
 

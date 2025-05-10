@@ -17,10 +17,10 @@ use App\Http\Controllers\SchoolController;
 */
 
 // Rota de usuário autenticado
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
-});
 
+Route::post('/', function () {
+    return response()->json(['message' => 'Rota inválida'], 404);
+});
 // Rotas de eventos de dispositivos
 Route::get('/device/push', [DeviceCommandController::class, 'getPendingCommand']);
 Route::post('/device/result', [DeviceCommandController::class, 'storeCommandResult']);

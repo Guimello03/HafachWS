@@ -8,6 +8,8 @@ use App\Models\School;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
+
 
 class ClientWizard extends Component
 {
@@ -25,6 +27,7 @@ class ClientWizard extends Component
     ];
 
     public $schoolData = [
+        'uuid' => '',
         'name' => '',
         'cnpj' => '',
     ];
@@ -72,6 +75,7 @@ class ClientWizard extends Component
 
     public function submit()
 {
+    
     $this->validate(array_merge($this->rulesStep1, $this->rulesStep2)); // Valida tudo
 
     DB::beginTransaction();
@@ -91,6 +95,7 @@ class ClientWizard extends Component
 
         // Criar a primeira School vinculada ao Client
         $school = School::create([
+            'uuid' => (string) Str::uuid(),
             'name' => $this->schoolData['name'],
             'cnpj' => $this->schoolData['cnpj'],
             'client_id' => $client->id,

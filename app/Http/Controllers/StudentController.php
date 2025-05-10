@@ -77,13 +77,16 @@ class StudentController extends Controller
             'guardian_id' => 'nullable|exists:guardians,uuid',
             'school_id' => 'required|exists:schools,uuid',
         ]);
+        
+
+
+        $student = Student::create($validated);
         if ($request->hasFile('photo')) {
-            $path = $request->file('photo')->store('photos', 'public');
-            $validated['photo_path'] = $path;
+            $filename = $student->uuid . '.jpg';
+            $path = $request->file('photo')->storeAs('users/photos', $filename, 'public');
+            $student->update(['photo_path' => $path]);
         }
-
-
-        Student::create($validated);
+        
         return redirect()->route('students.index')->with('success', 'Aluno criado com sucesso!');
     }
 
@@ -123,25 +126,31 @@ class StudentController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'registration_number' => 'required|string|max:255|unique:students,registration_number,'. $student->id,
+            'registration_number' => 'required|string|max:255|unique:students,registration_number,' . $student->uuid . ',uuid',
             'birth_date' => 'required|date',
             'photo_path' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
             'guardian_id' => 'nullable|exists:guardians,uuid',
         ]);
         
-
+        $student->update($validated);
 
         if ($request->hasFile('photo_path')) {
             // Delete the old photo if it exists
             if ($student->photo_path) {
                 Storage::disk('public')->delete($student->photo_path);
             }
-            $path = $request->file('photo_path')->store('photos', 'public');
+        
+            $filename = $student->uuid . '.jpg';
+            $path = $request->file('photo_path')->storeAs('users/photos', $filename, 'public');
 
-            $validated['photo_path'] = $path;
+        
+            // Atualiza apenas o campo da imagem
+            $student->update([
+                'photo_path' => $path
+            ]);
         }
         
-             $student->update($validated);
+             
 
              return redirect()->route('students.edit', $student->uuid);
     }
@@ -186,13 +195,21 @@ class StudentController extends Controller
         'photo' => 'required|image|max:2048',
     ]);
 
-    if ($student->photo_path) {
-        Storage::disk('public')->delete($student->photo_path);
-    }
-
-    $path = $request->file('photo')->store('photos', 'public');
-    $student->update(['photo_path' => $path]);
-
+    if ($request->hasFile('photo_path')) {
+            // Delete the old photo if it exists
+            if ($student->photo_path) {
+                Storage::disk('public')->delete($student->photo_path);
+            }
+        
+            $filename = $student->uuid . '.jpg';
+            $path = $request->file('photo_path')->storeAs('users/photos', $filename, 'public');
+            
+        
+            // Atualiza apenas o campo da imagem
+            $student->update([
+                'photo_path' => $path
+            ]);
+        }
     return redirect()->route('students.index')->with('success', 'Foto atualizada com sucesso!');
    }
 
@@ -220,5 +237,3 @@ public function removeGuardian(Student $student)
 
 
 }
-
-

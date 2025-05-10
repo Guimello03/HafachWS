@@ -21,7 +21,7 @@
                     </div>
                 @endif
 
-                <form action="{{ route('functionaries.store') }}" method="POST" enctype="multipart/form-data">
+                <form  method="POST" enctype="multipart/form-data" action="{{ route('functionaries.store') }}">
                     @csrf
 
                     <!-- Foto com input embutido -->
@@ -45,7 +45,7 @@
                                 <span class="text-xs text-white">Selecionar</span>
                             </div>
 
-                            <input type="file" name="photo" id="uploadPhoto" accept="image/*" class="hidden"
+                            <input type="file" name="photo_path" id="uploadPhoto" accept="image/*" class="hidden"
                                 onchange="previewPhoto(event)">
                         </label>
                     </div>

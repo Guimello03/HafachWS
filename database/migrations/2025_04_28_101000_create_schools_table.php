@@ -9,21 +9,20 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('schools', function (Blueprint $table) {
-            $table->id();
+            $table->uuid('uuid')->primary();
             $table->timestamps();
             $table->string('name')->nullable();
             $table->string('cnpj')->nullable();
             $table->foreignId('client_id')->nullable()->constrained('clients')->nullOnDelete();
-            $table->uuid('uuid')->unique();
         });
     }
 
     public function down(): void
     {
         Schema::table('schools', function (Blueprint $table) {
-            $table->dropForeign(['client_id']); // 🔥 Primeiro remove a FK
+            $table->dropForeign(['client_id']);
         });
 
-        Schema::dropIfExists('schools'); // 🔥 Depois remove a tabela
+        Schema::dropIfExists('schools');
     }
 };

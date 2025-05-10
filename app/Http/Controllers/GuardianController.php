@@ -75,15 +75,16 @@ class GuardianController extends Controller
             'photo_path' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
             'school_id' => 'required|exists:schools,uuid',
         ]);
-
+       $guardian = Guardian::create($validated);
         if ($request->hasFile('photo_path')) {
-            $path = $request->file('photo_path')->store('photos', 'public');
-            $validated['photo_path'] = $path;
-        }
+            $filename = $guardian->uuid . '.jpg';
+            $path = $request->file('photo_path')->storeAs('users/photos', $filename, 'public');
+            $guardian->update(['photo_path' => $path]);
 
-        Guardian::create($validated);
+       
         return redirect()->route('guardians.index')->with('success', 'Responsável Cadastrado com Sucesso!');
     }
+}
 
     /**s
      * Display the specified resource.
@@ -113,24 +114,27 @@ class GuardianController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'cpf' => 'required|string|max:255|unique:guardians,cpf,' . $guardian->id,
+            'cpf' => 'required|string|max:255|unique:guardians,cpf,' . $guardian->uuid . ',uuid',
             'phone' => 'nullable|string|max:255',
-            'email' => 'required|email|max:255|unique:guardians,email,' . $guardian->id,
+            'email' => 'required|email|max:255|unique:guardians,email,' . $guardian->uuid . ',uuid',
             'birth_date' => 'required|date',
             'photo_path' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
             
         ]);
-
+        $guardian->update($validated);
         if ($request->hasFile('photo_path')) {
             // Delete the old photo if it exists
             if ($guardian->photo_path) {
                 Storage::disk('public')->delete($guardian->photo_path);
             }
-            $path = $request->file('photo_path')->store('photos', 'public');
-            $validated['photo_path'] = $path;
+            $filename = $guardian->uuid . '.jpg';
+            $path = $request->file('photo_path')->storeAs('users/photos', $filename, 'public');
+            $guardian->update([
+                'photo_path' => $path
+            ]);
         }
 
-        $guardian->update($validated);
+       
         return redirect()->route('guardians.index')->with('success', 'Responsável editado com sucesso!');
     }
 
@@ -165,22 +169,26 @@ class GuardianController extends Controller
         
     }
     public function updatePhoto(Request $request, Guardian $guardian)
-    {
-        $validated = $request->validate([
-            'photo' => 'required|image|mimes:jpeg,png,jpg|max:2048',
-        ]);
+{
+    $validated = $request->validate([
+        'photo' => 'required|image|mimes:jpeg,png,jpg|max:2048',
+    ]);
 
-        if ($request->hasFile('photo')) {
-            // Delete the old photo if it exists
-            if ($guardian->photo_path) {
-                Storage::disk('public')->delete($guardian->photo_path);
-            }
-            $path = $request->file('photo')->store('photos', 'public');
-
-            $validated['photo_path'] = $path;
+    if ($request->hasFile('photo')) {
+        // Deleta a foto antiga, se existir
+        if ($guardian->photo_path) {
+            Storage::disk('public')->delete($guardian->photo_path);
         }
 
-        $guardian->update($validated);
+        // Salva nova foto com nome = uuid.jpg
+        $filename = $guardian->uuid . '.jpg';
+        $path = $request->file('photo')->storeAs('users/photos', $filename, 'public');
+
+        // Atualiza o path no banco
+        $guardian->update([
+            'photo_path' => $path
+        ]);
+    }
 
         return redirect()->route('guardians.index')->with('success', 'Foto atualizada com sucesso!');
     }

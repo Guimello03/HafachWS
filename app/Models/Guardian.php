@@ -4,12 +4,17 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Support\Str;
 
 class Guardian extends Model
 {
     use HasFactory;
 
     protected $table = 'guardians';
+    protected $primaryKey = 'uuid';
+protected $keyType = 'string';
+public $incrementing = false;
+
 
     protected $fillable = [
         'name',
@@ -28,20 +33,28 @@ class Guardian extends Model
         'updated_at' => 'datetime',
     ];
 
+    
+
     protected static function booted()
     {
-        static::creating(function ($guardian) {
-            $guardian->uuid = (string) \Illuminate\Support\Str::uuid();
+        static::creating(function ($model) {
+            if (empty($model->uuid)) {
+                $model->uuid = (string) Str::uuid();
+            }
+        });
+    
+        static::updating(function ($model) {
+            if ($model->isDirty('uuid')) {
+                $model->uuid = $model->getOriginal('uuid');
+            }
         });
     }
+    
 
     public function getRouteKeyName()
     {
         return 'uuid';
     }
-
-    protected $keyType = 'string';
-    public $incrementing = false;
 
     public function students()
     {
@@ -52,18 +65,20 @@ class Guardian extends Model
     {
         return $this->belongsTo(School::class, 'school_id', 'uuid');
     }
-    public function people()
-{
-    return $this->morphedByMany(
-        User::class, // ou qualquer modelo base, pode ser sobrescrito dinamicamente
-        'person',
-        'device_group_person',
-        'device_group_id',
-        'person_id'
-    )->withPivot('person_type')->withTimestamps();
-}
-public function externalDeviceIds()
-{
-    return $this->morphMany(\App\Models\ExternalDeviceId::class, 'person');
-}
+
+    public function deviceGroups()
+    {
+        return $this->morphToMany(
+            \App\Models\DeviceGroup::class,
+            'person',
+            'device_group_person',
+            'person_id',
+            'device_group_id'
+        )->withPivot('person_type')->withTimestamps();
+    }
+
+    public function externalDeviceIds()
+    {
+        return $this->morphMany(\App\Models\ExternalDeviceId::class, 'person');
+    }
 }

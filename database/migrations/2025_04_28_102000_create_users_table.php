@@ -23,6 +23,7 @@ return new class extends Migration
             $table->timestamps();
             $table->foreignId('client_id')->nullable()->constrained('clients')->nullOnDelete();
             $table->uuid('uuid')->unique();
+            $table->uuid('last_school_uuid')->nullable();
         });
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {

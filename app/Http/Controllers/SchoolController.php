@@ -8,28 +8,44 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use App\Models\Client;
 use App\Models\Guardian;
+use App\Models\DeviceGroup;
+use App\Models\Student;
+use App\Models\Functionary;
+
 
 class SchoolController extends Controller
 {
-    public function dashboard (Request $request)
-    
+    public function dashboard(Request $request)
     {
-        $school=activeSchool();
-        if (!$school) {
-            return redirect()->route('dashboard')->with('error', 'Escola ativa não definida.');
-        }
-
-        $director = $school->users()
-        ->role('school_director')
-        ->first();
-
         $breadcrumbs = [
-            ['label' => 'Dashboard', 'url' => route('dashboard')],
-            ['label' => 'Escola', 'url' => ''],
-            ];
-        return view('school.index', compact('school', 'breadcrumbs', 'director'));
+                ['label' => 'Dashboard', 'url' => route('dashboard')],
+                ['label' => 'Escola', 'url' => ''],
+        ];
+        $school = activeSchool();
+    if (!$school) {
+        return redirect()->route('dashboard')->with('error', 'Escola ativa não definida.');
+    }
+
+    // Pega todos os grupos da escola
+    $groups = DeviceGroup::where('school_id', $school->uuid)->get();
+    
+    
+        $director = $school->users()
+            ->role('school_director')
+            ->first();
+
+            $deviceGroups = $school->deviceGroups()->get();
+            
+
+    
+        return view('school.index', compact('breadcrumbs', 'director', 'school', 'groups'));
+              
     }
     
+    
+
+
+
     public function create(Client $client)
     {
         $breadcrumbs = [

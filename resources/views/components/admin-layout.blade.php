@@ -88,6 +88,9 @@
                 }
             });
         </script>
+        <style>
+            [x-cloak] { display: none !important; }
+        </style>
     </header>
     <!-- Layout principal -->
     <div class="flex h-[calc(100vh-4rem)] overflow-hidden">
@@ -178,6 +181,7 @@
 
     @livewireScripts
     @stack('scripts')
+   
 
 
 

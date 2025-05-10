@@ -6,13 +6,10 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('functionaries', function (Blueprint $table) {
-            $table->id();
+            $table->uuid('uuid')->primary(); // ✅ Chave primária real
             $table->timestamps();
             $table->string('name');
             $table->string('cpf')->unique();
@@ -20,19 +17,14 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->date('birth_date');
             $table->string('photo_path')->nullable();
-            $table->uuid('uuid')->unique(); // identificador principal externo
-            // ✅ Corrigido para usar uuid
+
             $table->uuid('school_id');
             $table->foreign('school_id')->references('uuid')->on('schools')->onDelete('cascade');
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('functionaries');
-        
     }
 };

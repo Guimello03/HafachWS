@@ -6,9 +6,6 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('device_device_group', function (Blueprint $table) {
@@ -17,14 +14,19 @@ return new class extends Migration
             $table->timestamps();
         
             $table->primary(['device_id', 'device_group_id']);
-            $table->foreign('device_id')->references('id')->on('devices')->onDelete('cascade');
-            $table->foreign('device_group_id')->references('id')->on('device_groups')->onDelete('cascade');
+
+            $table->foreign('device_id')
+                ->references('uuid')
+                ->on('devices')
+                ->onDelete('cascade');
+
+            $table->foreign('device_group_id')
+                ->references('uuid')
+                ->on('device_groups')
+                ->onDelete('cascade');
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('device_device_group');
