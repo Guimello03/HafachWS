@@ -69,13 +69,11 @@
                     </div>
 
                     <div class="mb-6">
-                        <label for="birth_date" class="block mb-2 text-sm font-medium text-gray-900">Data de
-                            Nascimento</label>
+                        <label for="birth_date" class="block mb-2 text-sm font-medium text-gray-900">Data de Nascimento</label>
                         <input type="date" name="birth_date" id="birth_date"
-                            value="{{ old('birth_date', $student->birth_date)->format('Y-m-d') }}"
+                            value="{{ old('birth_date', \Carbon\Carbon::parse($student->birth_date)->format('Y-m-d')) }}"
                             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
                     </div>
-
                     @if ($student->guardian_id == null)
                         <!-- Select para escolher responsável -->
                         <div class="mb-6">
@@ -181,23 +179,34 @@
 
     <!-- Script de preview de foto -->
     <script>
-        function previewPhoto(event) {
-            const input = event.target;
-            const file = input.files[0];
+       function previewPhoto(event) {
+    const input = event.target;
+    const file = input.files[0];
 
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const preview = document.getElementById('photoPreview');
-                    const placeholder = document.getElementById('noPhotoPlaceholder');
-                    preview.src = e.target.result;
-                    preview.classList.remove('hidden');
-                    if (placeholder) {
-                        placeholder.classList.add('hidden');
-                    }
-                }
-                reader.readAsDataURL(file);
+    console.log('📷 Preview carregado:', file);
+
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            const preview = document.getElementById('photoPreview');
+            const placeholder = document.getElementById('noPhotoPlaceholder');
+            preview.src = e.target.result;
+            preview.classList.remove('hidden');
+            if (placeholder) {
+                placeholder.classList.add('hidden');
             }
-        }
+        };
+        reader.readAsDataURL(file);
+    } else {
+        console.warn('⚠️ Nenhum arquivo selecionado no preview.');
+    }
+}
     </script>
+    <script>
+        document.querySelector('form').addEventListener('submit', function(e) {
+            const fileInput = document.getElementById('uploadPhoto');
+            const file = fileInput?.files[0];
+            console.log('📤 Submetendo imagem:', file);
+        });
+        </script>
 </x-admin-layout>

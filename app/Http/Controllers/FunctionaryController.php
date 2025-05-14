@@ -4,6 +4,10 @@ namespace App\Http\Controllers;
 use App\Models\Functionary;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use App\Services\ImageProcessingService;
+use App\Jobs\SendPhotoToDevicesJob;
+
+
 
 use Illuminate\Http\Request;
 
@@ -53,7 +57,7 @@ class FunctionaryController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(Request $request,  ImageProcessingService $imageService)
     {
         $school = activeSchool();
         if (!$school) {
@@ -66,15 +70,15 @@ class FunctionaryController extends Controller
             'phone' => 'nullable|string|max:255',
             'email' => 'required|email|max:255|unique:functionaries',
             'birth_date' => 'required|date',
-            'photo_path' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            'photo_path' => 'nullable|image|mimes:jpeg,png,jpg|max:5120',
             'school_id' => 'required|uuid|exists:schools,uuid',
         ]);
        $functionary =  Functionary::create($validated);
-        if ($request->hasFile('photo_path')) {
-            $filename = $functionary->uuid . '.jpg';
-            $path = $request->file('photo_path')->storeAs('users/photos', $filename, 'public');
-            $functionary->update(['photo_path' => $path]);
-        }
+       if ($request->hasFile('photo')) {
+        $image = $imageService->processUploadedImage($request->file('photo'), $functionary->uuid);
+        $functionary->photo_path = $image['path'];
+        $functionary->saveQuietly(); // evita disparar updated()
+    }
 
         
 
@@ -102,7 +106,7 @@ class FunctionaryController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Functionary $functionary)
+    public function update(Request $request, Functionary $functionary, ImageProcessingService $imageService)
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
@@ -110,21 +114,30 @@ class FunctionaryController extends Controller
             'phone' => 'nullable|string|max:255',
             'email' => 'required|email|max:255|unique:functionaries,email,' . $functionary->uuid . ',uuid',
             'birth_date' => 'required|date',
-            'photo_path' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            'photo_path' => 'nullable|image|mimes:jpeg,png,jpg|max:5120',
         ]);
         $functionary->update($validated);
 
 
-        if ($request->hasFile('photo_path')) {
-            // Delete the old photo if it exists
+        if ($request->hasFile('photo_path') && $request->file('photo_path')->isValid()) {
+            // Deletar foto anterior, se houver
             if ($functionary->photo_path) {
                 Storage::disk('public')->delete($functionary->photo_path);
             }
-            $filename = $functionary->uuid . '.jpg';
-            $path = $request->file('photo_path')->storeAs('users/photos', $filename, 'public');
-            $functionary->update([
-                'photo_path' => $path
-            ]);
+    
+            // Processar imagem com redimensionamento
+            $image = $imageService->processUploadedImage($request->file('photo_path'), $functionary->uuid);
+    
+            // Atualiza caminho no banco
+            $functionary->photo_path = $image['path'];
+            $functionary->save();
+        
+        
+    
+            // ✅ Agora sim: a imagem está salva, e o job pode ser disparado com segurança
+            foreach ($functionary->deviceGroups as $group) {
+                SendPhotoToDevicesJob::dispatch($group, $functionary);
+            }
         }
 
 
@@ -163,22 +176,31 @@ class FunctionaryController extends Controller
         
 
 }
-    public function updatePhoto(Request $request, Functionary $functionary)
+    public function updatePhoto(Request $request, Functionary $functionary, ImageProcessingService $imageService)
     {
         $validated = $request->validate([
-            'photo' => 'required|image|mimes:jpeg,png,jpg|max:2048',
+            'photo' => 'required|image|mimes:jpeg,png,jpg|max:5120',
         ]);
 
-        if ($request->hasFile('photo_path')) {
-            // Delete the old photo if it exists
+        if ($request->hasFile('photo') && $request->file('photo')->isValid()) {
+            // Deletar foto anterior, se houver
             if ($functionary->photo_path) {
                 Storage::disk('public')->delete($functionary->photo_path);
             }
-            $filename = $functionary->uuid . '.jpg';
-            $path = $request->file('photo_path')->storeAs('users/photos', $filename, 'public');
-            $functionary->update([
-                'photo_path' => $path
-            ]);
+    
+            // Processar imagem com redimensionamento
+            $image = $imageService->processUploadedImage($request->file('photo'), $functionary->uuid);
+    
+            // Atualiza caminho no banco
+            $functionary->photo_path = $image['path'];
+            $functionary->save();
+        
+        
+    
+            // ✅ Agora sim: a imagem está salva, e o job pode ser disparado com segurança
+            foreach ($functionary->deviceGroups as $group) {
+                SendPhotoToDevicesJob::dispatch($group, $functionary);
+            }
         }
 
         return redirect()->route('functionaries.index')->with('success', 'Foto atualizada com sucesso!');

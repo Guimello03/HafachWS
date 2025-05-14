@@ -6,6 +6,9 @@ use App\Models\Student;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use App\Models\Guardian;
+use App\Jobs\SendPhotoToDevicesJob;
+use App\Services\ImageProcessingService;
+
 
 
 
@@ -62,7 +65,7 @@ class StudentController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(Request $request, ImageProcessingService $imageService)
     {
         $school = activeSchool();
         if (!$school) {
@@ -73,7 +76,7 @@ class StudentController extends Controller
             'name' => 'required|string|max:255',
             'registration_number' => 'required|string|max:255|unique:students',
             'birth_date' => 'required|date',
-            'photo' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            'photo' => 'nullable|image|mimes:jpeg,png,jpg|max:5120',
             'guardian_id' => 'nullable|exists:guardians,uuid',
             'school_id' => 'required|exists:schools,uuid',
         ]);
@@ -82,9 +85,9 @@ class StudentController extends Controller
 
         $student = Student::create($validated);
         if ($request->hasFile('photo')) {
-            $filename = $student->uuid . '.jpg';
-            $path = $request->file('photo')->storeAs('users/photos', $filename, 'public');
-            $student->update(['photo_path' => $path]);
+            $image = $imageService->processUploadedImage($request->file('photo'), $student->uuid);
+            $student->photo_path = $image['path'];
+            $student->saveQuietly(); // evita disparar updated()
         }
         
         return redirect()->route('students.index')->with('success', 'Aluno criado com sucesso!');
@@ -122,38 +125,49 @@ class StudentController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Student $student)
+    public function update(Request $request, Student $student,ImageProcessingService $imageService)
     {
+        logger()->info('📷 Recebendo imagem:', [
+            'tem_arquivo' => $request->hasFile('photo_path'),
+            'é_válido' => $request->file('photo_path')?->isValid(),
+            'tamanho' => $request->file('photo_path')?->getSize(),
+            
+        ]);
+        
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'registration_number' => 'required|string|max:255|unique:students,registration_number,' . $student->uuid . ',uuid',
             'birth_date' => 'required|date',
-            'photo_path' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            'photo_path' => 'nullable|image|mimes:jpeg,png,jpg|max:5120',
             'guardian_id' => 'nullable|exists:guardians,uuid',
         ]);
-        
+       
         $student->update($validated);
 
-        if ($request->hasFile('photo_path')) {
-            // Delete the old photo if it exists
-            if ($student->photo_path) {
-                Storage::disk('public')->delete($student->photo_path);
-            }
-        
-            $filename = $student->uuid . '.jpg';
-            $path = $request->file('photo_path')->storeAs('users/photos', $filename, 'public');
-
-        
-            // Atualiza apenas o campo da imagem
-            $student->update([
-                'photo_path' => $path
-            ]);
+    // Processar nova foto se enviada
+    if ($request->hasFile('photo_path') && $request->file('photo_path')->isValid()) {
+        // Deletar foto anterior, se houver
+        if ($student->photo_path) {
+            Storage::disk('public')->delete($student->photo_path);
         }
-        
-             
 
-             return redirect()->route('students.edit', $student->uuid);
+        // Processar imagem com redimensionamento
+        $image = $imageService->processUploadedImage($request->file('photo_path'), $student->uuid);
+
+        // Atualiza caminho no banco
+        $student->photo_path = $image['path'];
+        $student->save();
+    
+    
+
+        // ✅ Agora sim: a imagem está salva, e o job pode ser disparado com segurança
+        foreach ($student->deviceGroups as $group) {
+            SendPhotoToDevicesJob::dispatch($group, $student);
+        }
     }
+
+    return redirect()->route('students.edit', $student->uuid)->with('success', 'Aluno atualizado com sucesso!');
+}
 
     /**
      * Remove the specified resource from storage.
@@ -189,27 +203,32 @@ class StudentController extends Controller
     }
    }
     
-    public function updatePhoto(Request $request, Student $student)
+    public function updatePhoto(Request $request, Student $student,ImageProcessingService $imageService)
   {
     $request->validate([
-        'photo' => 'required|image|max:2048',
+        'photo' =>  'nullable|image|mimes:jpeg,png,jpg|max:5120',
     ]);
 
-    if ($request->hasFile('photo_path')) {
-            // Delete the old photo if it exists
-            if ($student->photo_path) {
-                Storage::disk('public')->delete($student->photo_path);
-            }
-        
-            $filename = $student->uuid . '.jpg';
-            $path = $request->file('photo_path')->storeAs('users/photos', $filename, 'public');
-            
-        
-            // Atualiza apenas o campo da imagem
-            $student->update([
-                'photo_path' => $path
-            ]);
+    if ($request->hasFile('photo') && $request->file('photo')->isValid()) {
+        // Deletar foto anterior, se houver
+        if ($student->photo_path) {
+            Storage::disk('public')->delete($student->photo_path);
         }
+
+        // Processar imagem com redimensionamento
+        $image = $imageService->processUploadedImage($request->file('photo'), $student->uuid);
+
+        // Atualiza caminho no banco
+        $student->photo_path = $image['path'];
+        $student->save();
+    
+    
+
+        // ✅ Agora sim: a imagem está salva, e o job pode ser disparado com segurança
+        foreach ($student->deviceGroups as $group) {
+            SendPhotoToDevicesJob::dispatch($group, $student);
+        }
+    }
     return redirect()->route('students.index')->with('success', 'Foto atualizada com sucesso!');
    }
 

@@ -107,18 +107,23 @@ public function store(Request $request)
     $breadcrumbs = [
         ['label' => 'Dashboard', 'url' => route('dashboard')],
         ['label' => 'Clientes', 'url' => route('admin.dashboard')],
-        ['label' => 'Escolas', 'url' => route('clients.schools', $school->client_id)],
-        ['label' => 'Editar Escola', 'url' => ''], // sem URL porque é a página atual
+        ['label' => 'Editar Escola', 'url' => ''],
     ];
-    $client = $school->client;
-    return view('admin.schools.edit', compact('school', 'client', 'breadcrumbs'));
-}
 
+    $client = $school->client;
+
+    // 💡 Buscar SEMPRE o valor atualizado
+    $tolerance = \App\Models\SchoolSetting::where('school_id', $school->uuid)
+        ->where('key', 'event_tolerance_minutes')
+        ->first();
+
+    return view('admin.schools.edit', compact('school', 'breadcrumbs', 'client', 'tolerance'));
+}
 public function update(Request $request, School $school)
 {
     $validated = $request->validate([
         'name' => 'required|string|max:255',
-        'address' => 'nullable|string|max:255',
+        'corporate_name' => 'nullable|string|max:255',
         'cnpj' => 'nullable|string|max:18',
     ]);
 

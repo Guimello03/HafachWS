@@ -52,11 +52,12 @@ return [
 
     'channels' => [
 
-        'stack' => [
-            'driver' => 'stack',
-            'channels' => explode(',', env('LOG_STACK', 'single')),
-            'ignore_exceptions' => false,
-        ],
+       'stack' => [
+    'driver' => 'stack',
+    'channels' => ['single'], // Força explicitamente o canal single
+    'ignore_exceptions' => false,
+],
+
 
         'single' => [
             'driver' => 'single',

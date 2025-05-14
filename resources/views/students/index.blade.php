@@ -152,7 +152,7 @@
         <div @click.away="closeModal" class="relative p-6 bg-white rounded-lg shadow-lg w-96">
 
             <!-- Botão X flutuante para excluir a foto -->
-            <button x-show="photoPreview && studentId" x-bind:disabled="!studentId || !photoPreview || isDeleting"
+            <button x-show="photoPreview && studentUuid" x-bind:disabled="!studentUuid || !photoPreview || isDeleting"
                 @click="deletePhoto" title="Excluir foto"
                 class="absolute flex items-center justify-center w-8 h-8 text-red-600 transition-colors duration-200 rounded-full top-4 right-4 hover:text-white hover:bg-red-600">
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24"
@@ -176,7 +176,8 @@
                 </div>
             </template>
 
-            <form :action="`${updatePhotoUrl}/${studentId}/photo`" method="POST" enctype="multipart/form-data">
+            <form x-ref="form" @submit.prevent="submitForm" enctype="multipart/form-data">
+
                 @csrf
                 @method('PUT')
 
@@ -211,91 +212,121 @@
 
     {{-- Alpine Controller --}}
     <script>
-        
         function photoModal() {
             return {
                 isOpen: false,
-                studentId: null,
-
+                studentUuid: null,
+    
                 updatePhotoUrl: '{{ url('/students') }}',
                 removePhotoUrl: '{{ url('/students') }}',
-
+    
                 photoUrl: null,
                 photoPreview: null,
-
+    
                 isDeleting: false,
                 showToast: false,
                 toastMessage: '',
-
+    
                 openModal(uuid, url) {
                     this.isOpen = true;
-
-                    // Espera renderizar e aplica os valores
+    
                     setTimeout(() => {
-                        this.studentId = uuid;
+                        this.studentUuid = uuid;
                         this.photoUrl = url || null;
                         this.photoPreview = url || null;
                     }, 50);
                 },
-
+    
                 previewPhoto(event) {
                     const file = event.target.files[0];
                     if (file) {
                         this.photoPreview = URL.createObjectURL(file);
                     }
                 },
-
+    
                 closeModal() {
                     this.isOpen = false;
-                    this.studentId = null;
+                    this.studentUuid = null;
                     this.photoUrl = null;
                     this.photoPreview = null;
                     this.clearFileInput();
                 },
-
+    
                 clearFileInput() {
                     const input = document.getElementById('photo');
                     if (input) input.value = '';
                 },
-
+    
+                async submitForm(event) {
+                    event.preventDefault();
+    
+                    const fileInput = document.getElementById('photo');
+                    const file = fileInput.files[0];
+    
+                    if (!file || !this.studentUuid) {
+                        alert("Imagem ou aluno inválido.");
+                        return;
+                    }
+    
+                    const formData = new FormData();
+                    formData.append('photo', file);
+                    formData.append('_token', '{{ csrf_token() }}');
+                    formData.append('_method', 'PUT');
+    
+                    const url = `${this.updatePhotoUrl}/${this.studentUuid}/photo`;
+    
+                    try {
+                        const response = await fetch(url, {
+                            method: 'POST',
+                            body: formData
+                        });
+    
+                        if (!response.ok) throw new Error('Erro ao enviar imagem');
+    
+                        this.showToast = true;
+                        this.toastMessage = 'Foto enviada com sucesso!';
+    
+                        setTimeout(() => this.showToast = false, 3000);
+                        this.closeModal();
+                    } catch (error) {
+                        alert('Erro ao enviar a foto.');
+                    }
+                },
+    
                 async deletePhoto() {
-                    if (!this.studentId) {
+                    if (!this.studentUuid) {
                         alert("ID do aluno não encontrado.");
                         return;
                     }
-
+    
                     const confirmed = confirm('Tem certeza que deseja excluir a foto?');
                     if (!confirmed) return;
-
+    
                     this.isDeleting = true;
-
+    
                     try {
-                        const response = await fetch(`${this.removePhotoUrl}/${this.studentId}/remove-photo`, {
+                        const response = await fetch(`${this.removePhotoUrl}/${this.studentUuid}/remove-photo`, {
                             method: 'DELETE',
                             headers: {
-                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute(
-                                    'content'),
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
                                 'Accept': 'application/json',
                             },
                         });
-
+    
                         if (!response.ok) throw new Error('Erro ao excluir a foto');
-
-                        // Aqui faz o redirecionamento para o index após sucesso
+    
                         window.location.href = '{{ route('students.index') }}';
-
+    
                     } catch (e) {
                         alert('Erro ao excluir a foto.');
                     } finally {
                         this.isDeleting = false;
                     }
                 }
-
             }
         }
-
-       
     </script>
+    
     
 </div>
 </x-admin-layout>

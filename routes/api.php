@@ -3,9 +3,11 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ClientController;
-use App\Http\Controllers\DeviceEventController;
 use App\Http\Controllers\DeviceCommandController;
 use App\Http\Controllers\SchoolController;
+use App\Http\Controllers\DeviceEventController;
+use App\Http\Controllers\UserStatusController;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -24,3 +26,9 @@ Route::post('/', function () {
 // Rotas de eventos de dispositivos
 Route::get('/device/push', [DeviceCommandController::class, 'getPendingCommand']);
 Route::post('/device/result', [DeviceCommandController::class, 'storeCommandResult']);
+Route::post('/notifications/dao', [DeviceEventController::class, 'receiveDao']);
+
+
+// Busca ultimo acesso do aluno 
+
+Route::get('/users/last-status', [UserStatusController::class, 'index']);

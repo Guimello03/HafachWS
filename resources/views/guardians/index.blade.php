@@ -134,54 +134,55 @@
             </div>
         </div>
 
-        {{-- Modal --}}
-        <div x-show="isOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-            <div @click.away="closeModal" class="relative p-6 bg-white rounded-lg shadow-lg w-96">
-                <button x-show="photoPreview && guardianId" @click="deletePhoto"
-                    class="absolute flex items-center justify-center w-8 h-8 text-red-600 transition-colors duration-200 rounded-full top-4 right-4 hover:text-white hover:bg-red-600">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24"
-                        stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                </button>
+       <!-- Modal de Foto -->
+<div x-show="isOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+    <div @click.away="closeModal" class="relative p-6 bg-white rounded-lg shadow-lg w-96">
+        <button x-show="photoPreview && guardianId" @click="deletePhoto"
+            class="absolute flex items-center justify-center w-8 h-8 text-red-600 transition-colors duration-200 rounded-full top-4 right-4 hover:text-white hover:bg-red-600">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M6 18L18 6M6 6l12 12" />
+            </svg>
+        </button>
 
-                <h3 class="mb-4 text-lg font-semibold text-gray-800">Foto do Responsável</h3>
+        <h3 class="mb-4 text-lg font-semibold text-gray-800">Foto do Responsável</h3>
 
-                <template x-if="photoPreview">
-                    <img :src="photoPreview" class="object-cover w-full mb-4 border rounded h-60">
-                </template>
+        <template x-if="photoPreview">
+            <img :src="photoPreview" class="object-cover w-full mb-4 border rounded h-60">
+        </template>
 
-                <template x-if="!photoPreview">
-                    <div
-                        class="flex items-center justify-center w-full mb-4 text-gray-500 bg-gray-100 border rounded h-60">
-                        Sem Foto
-                    </div>
-                </template>
-
-                <form :action="`${updatePhotoUrl}/${guardianId}/photo`" method="POST" enctype="multipart/form-data">
-                    @csrf
-                    @method('PUT')
-
-                    <label for="photo"
-                        class="flex items-center justify-center w-full px-4 py-2 mb-2 font-semibold text-white bg-blue-600 rounded cursor-pointer hover:bg-blue-700">
-                        Adicionar Foto
-                        <input type="file" name="photo" id="photo" class="hidden" accept="image/*"
-                            @change="previewPhoto" required>
-                    </label>
-
-                    <div class="flex justify-between mt-4">
-                        <button type="submit" class="px-4 py-2 text-white bg-green-600 rounded hover:bg-green-700">
-                            Salvar Foto
-                        </button>
-                        <button type="button" @click="closeModal"
-                            class="px-4 py-2 text-gray-700 border rounded hover:bg-gray-100">
-                            Cancelar
-                        </button>
-                    </div>
-                </form>
+        <template x-if="!photoPreview">
+            <div
+                class="flex items-center justify-center w-full mb-4 text-gray-500 bg-gray-100 border rounded h-60">
+                Sem Foto
             </div>
-        </div>
+        </template>
+
+        <!-- FORMULÁRIO CORRETO -->
+        <form :action="`${updatePhotoUrl}/${guardianId}/photo`" method="POST" enctype="multipart/form-data">
+            @csrf
+            @method('PUT')
+
+            <label for="photo"
+                class="flex items-center justify-center w-full px-4 py-2 mb-2 font-semibold text-white bg-blue-600 rounded cursor-pointer hover:bg-blue-700">
+                Adicionar Foto
+                <input type="file" name="photo" id="photo" class="hidden" accept="image/*"
+                    @change="previewPhoto" required>
+            </label>
+
+            <div class="flex justify-between mt-4">
+                <button type="submit" class="px-4 py-2 text-white bg-green-600 rounded hover:bg-green-700">
+                    Salvar Foto
+                </button>
+                <button type="button" @click="closeModal"
+                    class="px-4 py-2 text-gray-700 border rounded hover:bg-gray-100">
+                    Cancelar
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
 
         {{-- Alpine Controller --}}
         <script>
@@ -193,20 +194,20 @@
                     removePhotoUrl: '{{ url('/guardians') }}',
                     photoPreview: null,
                     isDeleting: false,
-
+        
                     openModal(uuid, url) {
                         this.guardianId = uuid;
                         this.photoPreview = url || null;
                         this.isOpen = true;
                     },
-
+        
                     previewPhoto(event) {
                         const file = event.target.files[0];
                         if (file) {
                             this.photoPreview = URL.createObjectURL(file);
                         }
                     },
-
+        
                     closeModal() {
                         this.isOpen = false;
                         this.guardianId = null;
@@ -214,25 +215,24 @@
                         const fileInput = document.getElementById('photo');
                         if (fileInput) fileInput.value = '';
                     },
-
+        
                     async deletePhoto() {
                         if (!this.guardianId) return;
-
+        
                         const confirmed = confirm('Deseja realmente excluir a foto?');
                         if (!confirmed) return;
-
+        
                         try {
                             const response = await fetch(`${this.removePhotoUrl}/${this.guardianId}/remove-photo`, {
                                 method: 'DELETE',
                                 headers: {
-                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute(
-                                        'content'),
+                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
                                     'Accept': 'application/json',
                                 }
                             });
-
+        
                             if (!response.ok) throw new Error();
-
+        
                             window.location.href = '{{ route('guardians.index') }}';
                         } catch {
                             alert('Erro ao excluir a foto.');

@@ -21,7 +21,7 @@
                             @else
                                 <img id="photoPreview" src="https://via.placeholder.com/150"
                                     class="hidden object-cover w-full h-full">
-                                <div id="noPhotoPlaceholder"
+                                <div id="noPhotoPlaceholder" 
                                     class="flex items-center justify-center w-32 h-32 text-sm text-gray-400 bg-gray-100 border-2 border-gray-300 rounded-full shadow-sm">
                                     Sem Foto
                                 </div>
@@ -47,12 +47,13 @@
                 </div>
 
                 {{-- Form de edição --}}
-                <formmethod="POST" enctype="multipart/form-data" action="{{ route('functionaries.update', $functionary->uuid) }}">
+                <form action="{{ route('functionaries.update', $functionary) }}" method="POST" enctype="multipart/form-data">
                     @csrf
                     @method('PUT')
 
                     <input type="file" name="photo_path" id="uploadPhoto" accept="image/*" class="hidden"
                         onchange="previewPhoto(event)">
+
 
                     <div class="mb-4">
                         <label for="name" class="block mb-2 text-sm font-medium text-gray-900">Nome</label>
@@ -69,7 +70,7 @@
                     <div class="mb-4">
                         <label for="birth_date" class="block mb-2 text-sm font-medium text-gray-900">Data de Nascimento</label>
                         <input type="date" name="birth_date" id="birth_date"
-                            value="{{ old('birth_date', $functionary->birth_date)->format('Y-m-d') }}"
+                            value="{{ old('birth_date', \Carbon\Carbon::parse($functionary->birth_date)->format('Y-m-d')) }}"
                             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
                     </div>
 
@@ -115,20 +116,33 @@
     {{-- Script preview --}}
     <script>
         function previewPhoto(event) {
-            const input = event.target;
-            const file = input.files[0];
-
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const preview = document.getElementById('photoPreview');
-                    const placeholder = document.getElementById('noPhotoPlaceholder');
-                    preview.src = e.target.result;
-                    preview.classList.remove('hidden');
-                    if (placeholder) placeholder.classList.add('hidden');
-                }
-                reader.readAsDataURL(file);
-            }
-        }
-    </script>
+     const input = event.target;
+     const file = input.files[0];
+ 
+     console.log('📷 Preview carregado:', file);
+ 
+     if (file) {
+         const reader = new FileReader();
+         reader.onload = function (e) {
+             const preview = document.getElementById('photoPreview');
+             const placeholder = document.getElementById('noPhotoPlaceholder');
+             preview.src = e.target.result;
+             preview.classList.remove('hidden');
+             if (placeholder) {
+                 placeholder.classList.add('hidden');
+             }
+         };
+         reader.readAsDataURL(file);
+     } else {
+         console.warn('⚠️ Nenhum arquivo selecionado no preview.');
+     }
+ }
+     </script>
+     <script>
+        document.querySelector('form').addEventListener('submit', function(e) {
+            const fileInput = document.getElementById('uploadPhoto');
+            const file = fileInput?.files[0];
+            console.log('📤 Submetendo imagem:', file);
+        });
+        </script>
 </x-admin-layout>

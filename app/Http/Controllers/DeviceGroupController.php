@@ -152,6 +152,7 @@ class DeviceGroupController extends Controller
         // 3. Vincular ao grupo
         if (!empty($deviceIds)) {
             $group->devices()->attach($deviceIds);
+            $this->sendMonitorMode($deviceIds, $group->uuid, $school->uuid);
         }
 
         DB::commit();
@@ -218,6 +219,7 @@ public function update(Request $request, DeviceGroup $deviceGroup)
     }
 
     $deviceGroup->devices()->sync($deviceIds);
+    $this->sendMonitorMode($deviceIds, $deviceGroup->uuid, $deviceGroup->school_id);
 
     return redirect()
         ->route('groups.index')
@@ -290,6 +292,28 @@ public function setAutoTargets(Request $request)
 
     return redirect()->back()->with('success', 'Configuração de envio automático salva com sucesso.');
 }
+protected function sendMonitorMode(array $deviceIds, string $groupId, string $schoolId)
+{
+    $payload = [
+        'verb' => 'POST',
+        'endpoint' => 'set_configuration',
+        'body' => [
+            'monitor' => [
+                'request_timeout' => '5000',
+                'hostname' => '192.168.1.14',
+                'port' => '8000'
+            ]
+        ],
+        'contentType' => 'application/json',
+    ];
 
+    foreach ($deviceIds as $deviceId) {
+        \App\Models\DeviceGroupCommand::createAndDispatch([
+            'payload' => $payload, // ✔️ agora enviado corretamente
+            'device_group_id' => $groupId,
+            'devices' => [$deviceId]
+        ], $schoolId);
+    }
+}
 
 }

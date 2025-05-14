@@ -45,7 +45,7 @@
                                 class="h-10 px-4 py-2  shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition w-[400px] border rounded-lg" />
                         </form>
                         <a href="{{ route('functionaries.create') }}"
-                        class="flex items-center justify-center h-10 px-4 py-2 font-semibold text-white bg-blue-500 border rounded-lg shadow hover:bg-blue-600 focus:outline-none focus:ring focus:ring-blue-300">
+                            class="flex items-center justify-center h-10 px-4 py-2 font-semibold text-white bg-blue-500 border rounded-lg shadow hover:bg-blue-600 focus:outline-none focus:ring focus:ring-blue-300">
                             Cadastrar
                         </a>
                     </div>
@@ -108,7 +108,8 @@
                                                         d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5M18.5 2.5a2.121 2.121 0 113 3L12 15l-4 1 1-4 9.5-9.5z" />
                                                 </svg>
                                             </a>
-                                            <form action="{{ route('functionaries.destroy', $functionary) }}" method="POST"
+                                            <form action="{{ route('functionaries.destroy', $functionary) }}"
+                                                method="POST"
                                                 onsubmit="return confirm('Tem certeza que deseja excluir este responsável?');">
                                                 @csrf
                                                 @method('DELETE')
@@ -137,7 +138,7 @@
         {{-- Modal --}}
         <div x-show="isOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
             <div @click.away="closeModal" class="relative p-6 bg-white rounded-lg shadow-lg w-96">
-                <button x-show="photoPreview && functionaryId" @click="deletePhoto"
+                <button x-show="photoPreview && functionaryUuid" @click="deletePhoto"
                     class="absolute flex items-center justify-center w-8 h-8 text-red-600 transition-colors duration-200 rounded-full top-4 right-4 hover:text-white hover:bg-red-600">
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24"
                         stroke="currentColor">
@@ -159,7 +160,7 @@
                     </div>
                 </template>
 
-                <form :action="`${updatePhotoUrl}/${functionaryId}/photo`" method="POST" enctype="multipart/form-data">
+                <form x-ref="form" @submit.prevent="submitForm" enctype="multipart/form-data">
                     @csrf
                     @method('PUT')
 
@@ -188,16 +189,23 @@
             function photoModal() {
                 return {
                     isOpen: false,
-                    functionaryId: null,
+                    functionaryUuid: null,
+
                     updatePhotoUrl: '{{ url('/functionaries') }}',
                     removePhotoUrl: '{{ url('/functionaries') }}',
+
                     photoPreview: null,
                     isDeleting: false,
+                    showToast: false,
+                    toastMessage: '',
 
                     openModal(uuid, url) {
-                        this.functionaryId = uuid;
-                        this.photoPreview = url || null;
                         this.isOpen = true;
+
+                        setTimeout(() => {
+                            this.functionaryUuid = uuid;
+                            this.photoPreview = url || null;
+                        }, 50);
                     },
 
                     previewPhoto(event) {
@@ -209,24 +217,67 @@
 
                     closeModal() {
                         this.isOpen = false;
-                        this.functionaryId = null;
+                        this.functionaryUuid = null;
                         this.photoPreview = null;
                         const fileInput = document.getElementById('photo');
                         if (fileInput) fileInput.value = '';
                     },
 
+                    async submitForm(event) {
+                        event.preventDefault();
+
+                        const fileInput = document.getElementById('photo');
+                        const file = fileInput.files[0];
+
+                        if (!file || !this.functionaryUuid) {
+                            alert("Imagem ou ID do funcionário inválido.");
+                            return;
+                        }
+                        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+
+                        const formData = new FormData();
+                        formData.append('photo', file);
+                        formData.append('_token', document.querySelector('meta[name="csrf-token"]').content);
+                        formData.append('_method', 'PUT');
+
+                        const url = `${this.updatePhotoUrl}/${this.functionaryUuid}/photo`;
+
+                        try {
+                            const response = await fetch(url, {
+                                method: 'POST',
+                                headers: {
+                                    'X-CSRF-TOKEN': csrfToken,
+                                    // Se enviar apenas arquivo, não precisa de 'Content-Type' – o browser cuida disso para multipart/form-data
+                                },
+                                body: formData
+                            });
+
+                            if (!response.ok) throw new Error('Erro ao enviar a imagem');
+
+                            this.showToast = true;
+                            this.toastMessage = 'Foto enviada com sucesso!';
+
+                            setTimeout(() => this.showToast = false, 3000);
+                            this.closeModal();
+                        } catch (error) {
+                            alert('Erro ao enviar a foto.');
+                        }
+                    },
+
                     async deletePhoto() {
-                        if (!this.functionaryId) return;
+                        if (!this.functionaryUuid) return;
 
                         const confirmed = confirm('Deseja realmente excluir a foto?');
                         if (!confirmed) return;
 
+                        this.isDeleting = true;
+
                         try {
-                            const response = await fetch(`${this.removePhotoUrl}/${this.functionaryId}/remove-photo`, {
+                            const response = await fetch(`${this.removePhotoUrl}/${this.functionaryUuid}/remove-photo`, {
                                 method: 'DELETE',
                                 headers: {
-                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute(
-                                        'content'),
+                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
                                     'Accept': 'application/json',
                                 }
                             });
@@ -236,11 +287,14 @@
                             window.location.href = '{{ route('functionaries.index') }}';
                         } catch {
                             alert('Erro ao excluir a foto.');
+                        } finally {
+                            this.isDeleting = false;
                         }
                     }
                 }
             }
         </script>
+
     </div>
 
 </x-admin-layout>

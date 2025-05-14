@@ -9,6 +9,7 @@ use App\Http\Controllers\FunctionaryController;
 use App\Http\Controllers\SchoolSelectionController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\DeviceGroupController;
+use App\Http\Controllers\SchoolSettingController;
 
 
 /*
@@ -27,9 +28,7 @@ use App\Http\Controllers\DeviceGroupController;
 
 
 // Dashboard (acessível para todos logados)
-Route::get('/dashboard', function () {
-    return view('dashboard');
-})->middleware(['auth', 'ensure.school.selected'])->name('dashboard');
+Route::middleware(['auth','ensure.school.selected'])->get('/dashboard', [\App\Http\Controllers\DashboardController::class, 'index'])->name('dashboard');
 
 //------------------- Área de Seleção de Escola-----------------
 Route::middleware(['auth','role:super_admin|client_admin'])->group(function () {
@@ -38,8 +37,14 @@ Route::middleware(['auth','role:super_admin|client_admin'])->group(function () {
 });
 // ----------------- Área Super Admin -----------------
 Route::middleware(['auth','ensure.school.selected' ,  'role:super_admin'])->group(function () {
+    Route::get('/school/settings/tolerance', [SchoolSettingController::class, 'edit'])->name('school.settings.tolerance');
+    Route::post('/school/settings/tolerance', [SchoolSettingController::class, 'update']);
     Route::get('/clients/{client}/school.create', [SchoolController::class, 'create'])->name('clients.schools.index');
     Route::post('/schools.create', [SchoolController::class, 'store'])->name('schools.store');
+    Route::get('/schools/{school}/edit', [SchoolController::class, 'edit'])->name('schools.edit');
+    Route::put('/schools/{school}', [SchoolController::class, 'update'])->name('schools.update');
+
+
 
     Route::resource('clients', ClientController::class);
     Route::get('/clients/{client}/schools', [ClientController::class, 'schools'])->name('clients.schools');
@@ -94,7 +99,9 @@ Route::delete('/device_group/{deviceGroup/destroy', [DeviceGroupController::clas
     ->name('device_groups.store');
     Route::resource('groups', \App\Http\Controllers\DeviceGroupController::class);
    
-    
+    Route::get('/monitor', function () {
+        return view('dashboard');
+    });
 
 });
 

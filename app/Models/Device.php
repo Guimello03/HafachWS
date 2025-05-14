@@ -60,4 +60,9 @@ class Device extends Model
         ->orderBy('created_at')
         ->first();
 }
+public function status()
+{
+    return $this->hasOne(\App\Models\DeviceStatus::class, 'device_id', 'uuid');
+}
+
 }

@@ -95,7 +95,7 @@ class DeviceGroup extends Model
             ->merge($this->guardians)
             ->merge($this->functionaries);
     }
-    public function commands(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function commands()
 {
     return $this->hasMany(\App\Models\DeviceGroupCommand::class, 'device_group_id', 'uuid');
 }

@@ -10,6 +10,8 @@ use App\Models\{
     ExternalDeviceId,
     DeviceGroupCommand
 };
+use App\Jobs\SendPhotoToDevicesJob;
+
 
 class DeviceGroupPersonObserver
 {
@@ -40,61 +42,8 @@ class DeviceGroupPersonObserver
         }
     }
 
-    public function updated(Model $person)
-{
-    if ($person->wasChanged('photo_path')) {
-        logger()->info('[Observer] Foto alterada, enviando para dispositivos...', [
-            'uuid' => $person->uuid,
-            'model' => get_class($person),
-        ]);
-
-        // Pegamos todos os grupos aos quais essa pessoa está vinculada
-        $deviceGroups = $person->deviceGroups()->get(); // ✅ Correto
-
-
-        foreach ($deviceGroups as $group) {
-            self::sendPhotoToDevices($group, $person);
-        }
-    }
-}
-    public static function sendPhotoToDevices($deviceGroup, Model $person)
-{
-    $external = ExternalDeviceId::where('person_id', $person->uuid)
-        ->where('person_type', get_class($person))
-        ->whereIn('device_id', $deviceGroup->devices->pluck('uuid'))
-        ->get();
-
-    if ($external->isEmpty()) {
-        logger()->warning('[DeviceSync] Pessoa sem ID externo no grupo', [
-            'uuid' => $person->uuid,
-            'group' => $deviceGroup->name,
-        ]);
-        return;
-    }
-
-    $base64 = \App\Helpers\MediaHelper::getBase64UserPhoto($person->uuid);
-    if (!$base64) return;
-
-    $payload = [
-        'verb' => 'POST',
-        'endpoint' => 'user_set_image_list',
-        'contentType' => 'application/json',
-        'body' => [
-            'match' => false,
-            'user_images' => $external->map(fn ($e) => [
-                'user_id' => $e->external_id,
-                'timestamp' => now()->timestamp,
-                'image' => $base64
-            ])->values()->all(),
-        ]
-    ];
-
-    DeviceGroupCommand::createAndDispatch([
-        'device_group_id' => $deviceGroup->uuid,
-        'payload' => $payload,
-        'status' => \App\Enums\CommandStatus::Pending,
-    ], $deviceGroup->school_id);
-}
+    
+   
 
 public function deleting(Model $person)
 {

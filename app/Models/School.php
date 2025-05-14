@@ -14,6 +14,7 @@ class School extends Model
     protected $fillable = [
         'name',
         'cnpj',
+        'corporate_name',
         'client_id',
         'uuid',
     ];

@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Guardian;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use App\Services\ImageProcessingService;
+use App\Jobs\SendPhotoToDevicesJob;
 
 class GuardianController extends Controller
 {
@@ -57,7 +59,7 @@ class GuardianController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(Request $request,  ImageProcessingService $imageService)
     {
 
         $school = activeSchool();
@@ -72,18 +74,21 @@ class GuardianController extends Controller
             'phone' => 'nullable|string|max:255',
             'email' => 'required|email|max:255|unique:guardians',
             'birth_date' => 'required|date',
-            'photo_path' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            'photo_path' => 'nullable|image|mimes:jpeg,png,jpg|max:5120',
             'school_id' => 'required|exists:schools,uuid',
         ]);
        $guardian = Guardian::create($validated);
-        if ($request->hasFile('photo_path')) {
-            $filename = $guardian->uuid . '.jpg';
-            $path = $request->file('photo_path')->storeAs('users/photos', $filename, 'public');
-            $guardian->update(['photo_path' => $path]);
+       if ($request->hasFile('photo')) {
+        $image = $imageService->processUploadedImage($request->file('photo'), $guardian->uuid);
+        $guardian->photo_path = $image['path'];
+        $guardian->saveQuietly(); // evita disparar updated()
+    }
+
 
        
         return redirect()->route('guardians.index')->with('success', 'Responsável Cadastrado com Sucesso!');
-    }
+    
+
 }
 
     /**s
@@ -110,7 +115,7 @@ class GuardianController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Guardian $guardian)
+    public function update(Request $request, Guardian $guardian, ImageProcessingService $imageService)
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
@@ -118,21 +123,31 @@ class GuardianController extends Controller
             'phone' => 'nullable|string|max:255',
             'email' => 'required|email|max:255|unique:guardians,email,' . $guardian->uuid . ',uuid',
             'birth_date' => 'required|date',
-            'photo_path' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            'photo_path' => 'nullable|image|mimes:jpeg,png,jpg|max:5120',
             
         ]);
         $guardian->update($validated);
-        if ($request->hasFile('photo_path')) {
-            // Delete the old photo if it exists
+        if ($request->hasFile('photo_path') && $request->file('photo_path')->isValid()) {
+            // Deletar foto anterior, se houver
             if ($guardian->photo_path) {
                 Storage::disk('public')->delete($guardian->photo_path);
             }
-            $filename = $guardian->uuid . '.jpg';
-            $path = $request->file('photo_path')->storeAs('users/photos', $filename, 'public');
-            $guardian->update([
-                'photo_path' => $path
-            ]);
-        }
+    
+            // Processar imagem com redimensionamento
+            $image = $imageService->processUploadedImage($request->file('photo_path'), $guardian->uuid);
+    
+            // Atualiza caminho no banco
+            $guardian->photo_path = $image['path'];
+            $guardian->save();
+        
+        
+    
+            // ✅ Agora sim: a imagem está salva, e o job pode ser disparado com segurança
+            foreach ($guardian->deviceGroups as $group) {
+                SendPhotoToDevicesJob::dispatch($group, $guardian);
+            }
+            }
+        
 
        
         return redirect()->route('guardians.index')->with('success', 'Responsável editado com sucesso!');
@@ -168,28 +183,36 @@ class GuardianController extends Controller
         }
         
     }
-    public function updatePhoto(Request $request, Guardian $guardian)
+    public function updatePhoto(Request $request, Guardian $guardian, ImageProcessingService $imageService)
 {
     $validated = $request->validate([
-        'photo' => 'required|image|mimes:jpeg,png,jpg|max:2048',
+        'photo' => 'required|image|mimes:jpeg,png,jpg|max:5120',
     ]);
 
-    if ($request->hasFile('photo')) {
-        // Deleta a foto antiga, se existir
+    if ($request->hasFile('photo') && $request->file('photo')->isValid()) {
+        // Deletar foto anterior, se houver
         if ($guardian->photo_path) {
             Storage::disk('public')->delete($guardian->photo_path);
         }
 
-        // Salva nova foto com nome = uuid.jpg
-        $filename = $guardian->uuid . '.jpg';
-        $path = $request->file('photo')->storeAs('users/photos', $filename, 'public');
+        // Processar imagem com redimensionamento
+        $image = $imageService->processUploadedImage($request->file('photo'), $guardian->uuid);
 
-        // Atualiza o path no banco
-        $guardian->update([
-            'photo_path' => $path
-        ]);
+        // guardian caminho no banco
+        $guardian->photo_path = $image['path'];
+        $guardian->save();
+    
+    
+
+        // ✅ Agora sim: a imagem está salva, e o job pode ser disparado com segurança
+        foreach ($guardian->deviceGroups as $group) {
+            SendPhotoToDevicesJob::dispatch($group, $guardian);
+        }
     }
+
+
 
         return redirect()->route('guardians.index')->with('success', 'Foto atualizada com sucesso!');
     }
 }
+

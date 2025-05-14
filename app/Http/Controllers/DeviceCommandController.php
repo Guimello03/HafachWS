@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Device;
 use App\Models\DeviceCommandLog;
+use App\Models\DeviceStatus;
+
 use App\Http\Requests\StoreCommandResultRequest;
 use App\Http\Resources\DeviceCommandResource;
 use App\Enums\CommandStatus;
@@ -17,6 +19,11 @@ class DeviceCommandController extends Controller
 {
     $serial = $request->get('deviceId');
     $device = Device::where('serial_number', $serial)->firstOrFail();
+      // Atualiza ou cria o status com o timestamp atual
+       DeviceStatus::updateOrCreate(
+        ['device_id' => $device->uuid],
+        ['last_seen' => now()]
+    );
 
     // 1. Buscar o log com status 'pending' e comando 'sent'
     $log = DeviceCommandLog::where('device_id', $device->uuid)

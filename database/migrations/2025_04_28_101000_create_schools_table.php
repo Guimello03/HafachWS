@@ -12,6 +12,7 @@ return new class extends Migration
             $table->uuid('uuid')->primary();
             $table->timestamps();
             $table->string('name')->nullable();
+            $table->string('corporate_name')->nullable();
             $table->string('cnpj')->nullable();
             $table->foreignId('client_id')->nullable()->constrained('clients')->nullOnDelete();
         });

@@ -47,6 +47,6 @@ protected $keyType = 'string';
      */
     public function device(): BelongsTo
     {
-        return $this->belongsTo(Device::class);
+        return $this->belongsTo(Device::class, 'device_id', 'uuid');
     }
 }
