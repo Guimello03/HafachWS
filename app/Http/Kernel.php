@@ -37,6 +37,8 @@ class Kernel extends HttpKernel
     protected $routeMiddleware = [
         'auth' => \App\Http\Middleware\Authenticate::class,
         'ensure.school.selected' => \App\Http\Middleware\EnsureSchoolSelected::class,
+            'ensure.report.school.scope' => \App\Http\Middleware\EnsureReportSchoolScope::class,
+
 
         'guest' => \App\Http\Middleware\RedirectIfAuthenticated::class,
         'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,

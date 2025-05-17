@@ -10,6 +10,8 @@ use App\Http\Controllers\SchoolSelectionController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\DeviceGroupController;
 use App\Http\Controllers\SchoolSettingController;
+use App\Http\Controllers\ReportController;
+
 
 
 /*
@@ -106,7 +108,46 @@ Route::delete('/device_group/{deviceGroup/destroy', [DeviceGroupController::clas
 });
 
 
+Route::prefix('reports')->middleware(['web', 'auth', 'ensure.school.selected', 'ensure.report.school.scope'])->name('reports.')->group(function () {
+    Route::get('/', [ReportController::class, 'index'])->name('index');
 
+    
+    Route::get('/student-attendance', [ReportController::class, 'studentAttendanceView'])->name('student_attendance.view');
+    Route::get('/student-attendance/data', [ReportController::class, 'studentAttendance'])->name('student_attendance');
+    Route::get('/guardian-attendance', [ReportController::class, 'guardianAttendanceView'])->name('guardian_attendance.view');
+    Route::get('/guardian-attendance/data', [ReportController::class, 'guardianAttendance'])->name('guardian_attendance');
+    Route::get('/functionary-attendance', [ReportController::class, 'functionaryAttendanceView'])->name('functionary_attendance.view');
+    Route::get('/functionary-attendance/data', [ReportController::class, 'functionaryAttendance'])->name('functionary_attendance');
+    Route::get('/users-without-photo/view', [ReportController::class, 'usersWithoutPhotoView'])->name('users_without_photo.view');
+
+
+
+    // Relatório de usuários sem foto
+    Route::get('/users-without-photo', [ReportController::class, 'usersWithoutPhoto'])->name('users_without_photo');
+
+    // 🔍 Busca de pessoas (autocomplete)
+    Route::get('/person-search', function (\Illuminate\Http\Request $request) {
+        $term = $request->get('term');
+        $schoolId = session('school_id');
+        $type = $request->get('type'); // 'student', 'guardian', 'functionary'
+
+        $modelMap = [
+            'student' => \App\Models\Student::class,
+            'guardian' => \App\Models\Guardian::class,
+            'functionary' => \App\Models\Functionary::class,
+        ];
+
+        if (!isset($modelMap[$type]) || !$term || !$schoolId) {
+            return response()->json([]);
+        }
+
+        return $modelMap[$type]::where('school_id', $schoolId)
+            ->where('name', 'like', "%{$term}%")
+            ->select('uuid', 'name')
+            ->limit(20)
+            ->get();
+    })->name('person_search');
+});
 
 
 

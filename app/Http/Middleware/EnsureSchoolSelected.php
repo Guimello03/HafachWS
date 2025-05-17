@@ -4,61 +4,71 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
-use Symfony\Component\HttpFoundation\Response;
-use App\Models\User;
-use App\Models\School;
-use App\Models\Client;
 use Illuminate\Support\Facades\Auth;
-
+use App\Models\School;
+use Illuminate\Support\Facades\Log;
 
 class EnsureSchoolSelected
 {
-    /**
-     * Handle an incoming request.
-     *
-     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
-     */
-    public function handle($request, \Closure $next)
+    public function handle(Request $request, Closure $next)
     {
         $user = Auth::user();
-    
-        // Super admin passa direto
+
+        if (!$user) {
+            Log::warning('Acesso negado: usuário não autenticado.');
+            return redirect()->route('login')->withErrors(['Sessão expirada. Faça login novamente.']);
+        }
+
+        // 🟢 Super Admin: ignora tudo
         if ($user->hasRole('super_admin')) {
             return $next($request);
         }
-    
-        // client_admin: se não tiver session, usa last_school_uuid
+
+        // 🟡 Client Admin: define school_id via last_school_uuid ou primeira escola
         if ($user->hasRole('client_admin')) {
             if (!session()->has('school_id')) {
-                $lastSchoolUuid = $user->last_school_uuid;
-    
-                if ($lastSchoolUuid) {
-                    session(['school_id' => $lastSchoolUuid]);
-                } else {
-                    // fallback: pega a primeira escola vinculada
+                $schoolUuid = $user->last_school_uuid;
+
+                if (!$schoolUuid) {
                     $firstSchool = $user->schools()->first();
-    
+
                     if ($firstSchool) {
-                        session(['school_id' => (string) $firstSchool->uuid]);
-                        $user->update(['last_school_uuid' => $firstSchool->uuid]);
-                    } else {
-                        Auth::logout();
-                        return redirect()->route('login')->withErrors([
-                            'email' => 'Nenhuma escola vinculada ao seu usuário.',
-                        ]);
+                        $schoolUuid = $firstSchool->uuid;
+                        $user->update(['last_school_uuid' => $schoolUuid]);
                     }
                 }
+
+                if ($schoolUuid) {
+                    session(['school_id' => $schoolUuid]);
+                }
             }
-    
+
             return $next($request);
         }
-    
-        // Outros: exige school_id na sessão
-        if (!session()->has('school_id')) {
-            return redirect()->route('select.school');
+
+        // 🔵 School Director: pega last_school_uuid
+        if ($user->hasRole('school_director')) {
+            if (!session()->has('school_id') && $user->last_school_uuid) {
+                session(['school_id' => $user->last_school_uuid]);
+            }
+
+            // Ainda sem school_id? Força seleção
+            if (!session()->has('school_id')) {
+                Log::warning('Diretor sem escola vinculada ou sessão perdida.', [
+                    'user_id' => $user->id
+                ]);
+                return redirect()->route('select.school')->withErrors(['Nenhuma escola vinculada ao seu perfil.']);
+            }
+
+            return $next($request);
         }
-    
-        return $next($request);
+
+        // 🚫 Outros papéis não autorizados
+        Log::warning('Usuário com papel não autorizado tentou acessar uma rota escolar.', [
+            'user_id' => $user->id,
+            'roles' => $user->roles->pluck('name')
+        ]);
+
+        return redirect()->route('login')->withErrors(['Você não tem permissão para acessar essa área.']);
     }
-    
 }
