@@ -294,22 +294,42 @@ public function setAutoTargets(Request $request)
 }
 protected function sendMonitorMode(array $deviceIds, string $groupId, string $schoolId)
 {
-    $payload = [
-        'verb' => 'POST',
-        'endpoint' => 'set_configuration',
-        'body' => [
-            'monitor' => [
-                'request_timeout' => '5000',
-                'hostname' => '192.168.1.14',
-                'port' => '8000'
-            ]
-        ],
-        'contentType' => 'application/json',
-    ];
-
     foreach ($deviceIds as $deviceId) {
+        // ✅ 1. Comando para modo monitor
+        $monitorPayload = [
+            'verb' => 'POST',
+            'endpoint' => 'set_configuration',
+            'body' => [
+                'monitor' => [
+                    'request_timeout' => '5000',
+                    'hostname' => '192.168.1.14',
+                    'port' => '8000'
+                ]
+            ],
+            'contentType' => 'application/json',
+        ];
+
         \App\Models\DeviceGroupCommand::createAndDispatch([
-            'payload' => $payload, // ✔️ agora enviado corretamente
+            'payload' => $monitorPayload,
+            'device_group_id' => $groupId,
+            'devices' => [$deviceId]
+        ], $schoolId);
+
+        // ✅ 2. Comando para modo QR Code (alfanumérico)
+        $qrPayload = [
+            'verb' => 'POST',
+            'endpoint' => 'set_configuration',
+            'body' => [
+                // Altere para 'barras' se for V5 (pode detectar pelo modelo, se quiser)
+                'face_id' => [
+                    'qrcode_legacy_mode_enabled' => '0'
+                ]
+            ],
+            'contentType' => 'application/json',
+        ];
+
+        \App\Models\DeviceGroupCommand::createAndDispatch([
+            'payload' => $qrPayload,
             'device_group_id' => $groupId,
             'devices' => [$deviceId]
         ], $schoolId);

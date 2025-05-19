@@ -29,48 +29,49 @@ class UserCreationResponseHandler
         $deviceGroup = $command->deviceGroup;
         $payloadUsers = collect($command->payload['body']['values']);
 
-        $userGroupPayloads = [];
-        $photoPayloads = [];
+       $userGroupPayloads = [];
+$photoPayloads = [];
+$qrPayloads = [];
 
-        foreach ($externalIds as $index => $externalId) {
-            $userData = $payloadUsers[$index] ?? null;
-            if (!$userData || empty($userData['registration'])) continue;
+foreach ($externalIds as $index => $externalId) {
+    $userData = $payloadUsers[$index] ?? null;
+    if (!$userData || empty($userData['registration'])) continue;
 
-            $person = self::findPersonByRegistration($userData['registration']);
-            if (!$person) continue;
+    $person = self::findPersonByRegistration($userData['registration']);
+    if (!$person) continue;
 
-            ExternalDeviceId::updateOrCreate([
-                'person_id' => $person->uuid,
-                'person_type' => get_class($person),
-                'device_id' => $deviceId,
-            ], [
-                'external_id' => $externalId,
-                'uuid' => (string) Str::uuid(),
-            ]);
+    ExternalDeviceId::updateOrCreate([
+        'person_id' => $person->uuid,
+        'person_type' => get_class($person),
+        'device_id' => $deviceId,
+    ], [
+        'external_id' => $externalId,
+        'uuid' => (string) Str::uuid(),
+    ]);
 
-            logger()->info('[UserCreationResponseHandler] Salvando external_id', [
-                'person_id' => $person->uuid,
-                'type' => get_class($person),
-                'device_id' => $deviceId,
-                'external_id' => $externalId,
-            ]);
+    // ✅ user_groups
+    $userGroupPayloads[] = [
+        'user_id' => $externalId,
+        'group_id' => 1,
+    ];
 
-            // ✅ user_groups
-            $userGroupPayloads[] = [
-                'user_id' => $externalId,
-                'group_id' => 1,
-            ];
+    // ✅ Foto (facial image)
+    $photoBase64 = MediaHelper::getBase64UserPhoto($person->uuid);
+    if ($photoBase64) {
+        $photoPayloads[] = [
+            'user_id' => $externalId,
+            'timestamp' => Carbon::now()->timestamp,
+            'image' => $photoBase64,
+        ];
+    }
 
-            // ✅ user_images (foto facial)
-            $photoBase64 = MediaHelper::getBase64UserPhoto($person->uuid);
-            if ($photoBase64) {
-                $photoPayloads[] = [
-                    'user_id' => $externalId,
-                    'timestamp' => Carbon::now()->timestamp,
-                    'image' => $photoBase64,
-                ];
-            }
-        }
+    // ✅ QR Code (UUID como identificador)
+    $qrPayloads[] = [
+        'user_id' => $externalId,
+        
+        'value' => $person->uuid,
+    ];
+}
 
         // 🔁 Envio dos grupos
         collect($userGroupPayloads)->chunk(100)->each(function ($chunk) use ($deviceGroup) {
@@ -109,6 +110,23 @@ class UserCreationResponseHandler
                 'status' => \App\Enums\CommandStatus::Pending,
             ], $deviceGroup->school_id);
         });
+        collect($qrPayloads)->chunk(100)->each(function ($chunk) use ($deviceGroup) {
+    $payload = [
+        'verb' => 'POST',
+        'endpoint' => 'create_objects',
+        'contentType' => 'application/json',
+        'body' => [
+            'object' => 'qrcodes',
+            'values' => $chunk->values()->all(),
+        ],
+    ];
+
+    DeviceGroupCommand::createAndDispatch([
+        'device_group_id' => $deviceGroup->uuid,
+        'payload' => $payload,
+        'status' => \App\Enums\CommandStatus::Pending,
+    ], $deviceGroup->school_id);
+});
     }
 
     private static function findPersonByRegistration(string $registration): ?\Illuminate\Database\Eloquent\Model

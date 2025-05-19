@@ -15,33 +15,49 @@ use App\Models\Functionary;
 
 class SchoolController extends Controller
 {
-    public function dashboard(Request $request)
-    {
-        $breadcrumbs = [
-                ['label' => 'Dashboard', 'url' => route('dashboard')],
-                ['label' => 'Escola', 'url' => ''],
-        ];
-        $school = activeSchool();
+   
+public function dashboard(Request $request)
+{
+    $breadcrumbs = [
+        ['label' => 'Dashboard', 'url' => route('dashboard')],
+        ['label' => 'Escola', 'url' => ''],
+    ];
+
+    $school = activeSchool();
     if (!$school) {
         return redirect()->route('dashboard')->with('error', 'Escola ativa não definida.');
     }
 
-    // Pega todos os grupos da escola
     $groups = DeviceGroup::where('school_id', $school->uuid)->get();
-    
-    
-        $director = $school->users()
-            ->role('school_director')
-            ->first();
+    $director = $school->users()->role('school_director')->first();
 
-            $deviceGroups = $school->deviceGroups()->get();
-            
+    $personType = $request->get('type'); // 'students', 'guardians', 'functionaries'
+    $personId = $request->get('person_uuid');
 
-    
-        return view('school.index', compact('breadcrumbs', 'director', 'school', 'groups'));
-              
+    $people = collect(); // ← fallback seguro
+    $types = [
+    'student' => ['label' => 'Aluno', 'model' => Student::class],
+    'guardian' => ['label' => 'Responsável', 'model' => Guardian::class],
+    'functionary' => ['label' => 'Funcionário', 'model' => Functionary::class],
+];
+
+
+   if ($personType && isset($types[$personType])) {
+    $model = $types[$personType]['model'];
+
+        $query = $model::where('school_id', $school->uuid);
+
+        if ($personId) {
+            $query->where('uuid', $personId);
+        }
+
+        $people = $query->get();
     }
-    
+
+    return view('school.index', compact(
+        'breadcrumbs', 'director', 'school', 'groups', 'types', 'personType', 'personId', 'people'
+    ));
+}
     
 
 

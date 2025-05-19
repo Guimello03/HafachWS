@@ -169,7 +169,7 @@
                 <div class="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
                     @foreach ($groups as $group)
                         <div
-                            class="p-4 bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow">
+                            class="p-4 transition-shadow bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md">
                             <h4 class="text-lg font-semibold text-gray-800">{{ $group->name }}</h4>
                             <p class="mt-1 text-sm text-gray-500">Dispositivos: {{ $group->devices->count() }}</p>
 
@@ -191,18 +191,176 @@
 
 
 
-            {{-- QR CODE --}}
-            <div x-show="tab === 'qr'" x-cloak>
-                <h3 class="mb-4 text-lg font-semibold text-gray-700">QR Code de Acesso</h3>
-                <p class="mb-2 text-gray-600">Utilize este código para acessar diretamente a página da escola.</p>
-                <div class="inline-block p-4 border rounded-lg bg-gray-50">
-                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://escola.app/school/123"
-                        alt="QR Code">
+          <div x-show="tab === 'qr'" x-cloak x-init="initPersonSelect()">
+    <h3 class="mb-4 text-lg font-semibold text-gray-700">Gerar QR Codes</h3>
+
+    <!-- Card Estilo Moderno -->
+    <div class="max-w-sm p-6 text-gray-700 bg-white border border-gray-200 rounded-lg shadow-md">
+        <div class="flex flex-col items-start space-y-4">
+            <div class="text-3xl text-indigo-600">
+                <!-- Ícone -->
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M4 4h4v4H4V4zm6 0h4v4h-4V4zM4 10h4v4H4v-4zm6 6h4v4h-4v-4zm6-6h4v4h-4v-4zm0 6h4v4h-4v-4z" />
+                </svg>
+            </div>
+            <h3 class="text-lg font-semibold">Gerar QR Codes</h3>
+            <p class="text-sm text-gray-600">
+                Gere um arquivo PDF com os QR Codes dos <strong>alunos</strong>, <strong>responsáveis</strong> ou <strong>funcionários</strong>.
+            </p>
+            <button onclick="document.getElementById('qrModal').classList.remove('hidden')"
+                class="px-4 py-2 text-sm font-semibold text-white transition bg-indigo-600 rounded-md hover:bg-indigo-700">
+                Gerar
+            </button>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div id="qrModal" class="fixed inset-0 z-50 flex items-center justify-center hidden bg-black bg-opacity-50">
+        <div class="bg-white w-full max-w-5xl rounded-lg shadow-lg p-6 relative overflow-y-auto max-h-[90vh]">
+
+            <!-- Fechar -->
+            <button onclick="document.getElementById('qrModal').classList.add('hidden')"
+                class="absolute text-2xl text-gray-400 top-4 right-6 hover:text-gray-600">&times;</button>
+
+            <h3 class="mb-6 text-2xl font-semibold text-gray-800">Configurar QR Codes</h3>
+
+            <!-- Formulário -->
+            <form id="qr-form" class="grid grid-cols-1 gap-4 mb-6 md:grid-cols-3" onsubmit="return false;">
+                @csrf
+
+                <div>
+                    <label class="block mb-1 font-medium text-gray-700">Tipo de Usuário</label>
+                    <select name="type" id="type" class="w-full border-gray-300 rounded-md shadow-sm">
+                        <option value="">Selecione</option>
+                        @foreach ($types as $key => $info)
+                            <option value="{{ $key }}">{{ $info['label'] }}</option>
+                        @endforeach
+                    </select>
                 </div>
+
+                <div>
+                    <label class="block mb-1 font-medium text-gray-700">Nome</label>
+                    <select name="person_uuid" id="person_uuid"
+                        placeholder="Todos"
+                        autocomplete="off"
+                        class="w-full border-gray-300 rounded shadow-sm">
+                        <option value="">Todos</option>
+                    </select>
+                </div>
+
+                <div class="self-end">
+                    <button type="submit" onclick="submitQRForm()"
+                        class="w-full px-4 py-2 text-white transition bg-indigo-600 rounded-md hover:bg-indigo-700">
+                        Gerar
+                    </button>
+                </div>
+            </form>
+
+            <!-- Sempre presente no DOM -->
+            <div id="qr-preview" class="hidden p-6 mb-6 border border-gray-100 rounded-lg bg-gray-50">
+                <!-- QR Codes vão ser carregados aqui via JS -->
             </div>
         </div>
     </div>
 
+    <!-- Scripts -->
+  <script>
+    // Inicializa TomSelect
+    function initPersonSelect() {
+        if (window.personSelectInstance) return;
 
+        const typeInput = document.querySelector('[name="type"]');
+        const selectElement = document.getElementById('person_uuid');
+
+        window.personSelectInstance = new TomSelect(selectElement, {
+            create: false,
+            allowEmptyOption: true,
+            placeholder: 'Todos',
+            valueField: 'value',
+            labelField: 'text',
+            searchField: 'text',
+            preload: false,
+            load: function(query, callback) {
+                const type = typeInput.value;
+                if (!type || query.length < 1) return callback();
+                fetch(`/reports/person-search?type=${type}&term=${encodeURIComponent(query)}`)
+                    .then(res => res.json())
+                    .then(data => callback(data.map(p => ({ value: p.uuid, text: p.name }))))
+                    .catch(() => callback());
+            },
+            plugins: ['clear_button'],
+            onClear: function () {
+                this.clearOptions();
+                this.addOption({ value: '', text: 'Todos' });
+                this.setValue('');
+            }
+        });
+
+        typeInput.addEventListener('change', () => {
+            if (window.personSelectInstance) {
+                window.personSelectInstance.destroy();
+                window.personSelectInstance = null;
+            }
+            setTimeout(() => initPersonSelect(), 50);
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        initPersonSelect();
+    });
+
+    // Espera o form aparecer e atualiza os campos ocultos
+    function waitForFormAndSetInputs(type, person) {
+        const preview = document.getElementById('qr-preview');
+        const form = preview.querySelector('form[action*="qr-download-pdf"]');
+
+        if (form) {
+            const typeInput = form.querySelector('input[name="type"]');
+            const uuidInput = form.querySelector('input[name="person_uuid"]');
+
+            if (typeInput) typeInput.value = type;
+            if (uuidInput) uuidInput.value = person;
+
+            console.log("📥 Inputs atualizados para PDF:", { type, person });
+        } else {
+            // 🔁 tenta novamente em 100ms se ainda não carregou
+            setTimeout(() => waitForFormAndSetInputs(type, person), 100);
+        }
+    }
+
+    // Gera o preview dos QR Codes
+    function submitQRForm() {
+        const type = document.getElementById('type').value;
+        const personSelect = document.getElementById('person_uuid');
+        const selectInstance = personSelect?.tomselect;
+        const person = selectInstance?.getValue() ?? '';
+
+        const preview = document.getElementById('qr-preview');
+        if (!preview) {
+            console.warn('#qr-preview não encontrado');
+            return;
+        }
+
+        preview.innerHTML = '<p class="text-gray-500">Carregando...</p>';
+        preview.classList.remove('hidden');
+
+        fetch(`/qr-preview?type=${type}&person_uuid=${person}`, {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(res => res.text())
+        .then(html => {
+            preview.innerHTML = html;
+            waitForFormAndSetInputs(type, person);
+        })
+        .catch(() => {
+            preview.innerHTML = '<p class="text-red-500">Erro ao gerar QR Codes.</p>';
+        });
+    }
+</script>
+
+
+</div>
 
 </x-admin-layout>

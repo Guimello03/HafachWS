@@ -11,6 +11,8 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\DeviceGroupController;
 use App\Http\Controllers\SchoolSettingController;
 use App\Http\Controllers\ReportController;
+use App\Http\Controllers\QrController;
+
 
 
 
@@ -104,6 +106,10 @@ Route::delete('/device_group/{deviceGroup/destroy', [DeviceGroupController::clas
     Route::get('/monitor', function () {
         return view('dashboard');
     });
+    Route::get('/qr-preview', [QrController::class, 'preview'])->name('qr.preview');
+    Route::post('/qr-download-pdf', [QrController::class, 'downloadPdf'])->name('qr.download.pdf');
+
+
 
 });
 
